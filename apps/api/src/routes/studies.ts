@@ -109,6 +109,108 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
+  // Update condition
+  app.patch<{ Params: { id: string; conditionId: string } }>(
+    "/studies/:id/conditions/:conditionId",
+    async (req, reply) => {
+      const condition = await db("conditions")
+        .where({ id: req.params.conditionId, study_id: req.params.id })
+        .first();
+      if (!condition) return reply.code(404).send({ error: "Condition not found" });
+
+      const [updated] = await db("conditions")
+        .where({ id: req.params.conditionId })
+        .update({ ...(req.body as object), updated_at: new Date() })
+        .returning("*");
+      return updated;
+    },
+  );
+
+  // Delete condition
+  app.delete<{ Params: { id: string; conditionId: string } }>(
+    "/studies/:id/conditions/:conditionId",
+    async (req, reply) => {
+      const deleted = await db("conditions")
+        .where({ id: req.params.conditionId, study_id: req.params.id })
+        .delete();
+      if (!deleted) return reply.code(404).send({ error: "Condition not found" });
+      return reply.code(204).send();
+    },
+  );
+
+  // Update question
+  app.patch<{ Params: { id: string; questionId: string } }>(
+    "/studies/:id/questions/:questionId",
+    async (req, reply) => {
+      const question = await db("questions")
+        .where({ id: req.params.questionId, study_id: req.params.id })
+        .first();
+      if (!question) return reply.code(404).send({ error: "Question not found" });
+
+      const [updated] = await db("questions")
+        .where({ id: req.params.questionId })
+        .update({ ...(req.body as object), updated_at: new Date() })
+        .returning("*");
+      return updated;
+    },
+  );
+
+  // Delete question
+  app.delete<{ Params: { id: string; questionId: string } }>(
+    "/studies/:id/questions/:questionId",
+    async (req, reply) => {
+      const deleted = await db("questions")
+        .where({ id: req.params.questionId, study_id: req.params.id })
+        .delete();
+      if (!deleted) return reply.code(404).send({ error: "Question not found" });
+      return reply.code(204).send();
+    },
+  );
+
+  // Upload human benchmarks for Goal 2 comparison
+  const BenchmarkSchema = z.object({
+    benchmarks: z.array(
+      z.object({
+        question_id: z.string().uuid().optional(),
+        finding_label: z.string().min(1),
+        effect_size: z.number(),
+        effect_size_type: z.string().min(1),
+        ci_lower: z.number().optional(),
+        ci_upper: z.number().optional(),
+        p_value: z.number().optional(),
+        source_citation: z.string().optional(),
+      }),
+    ).min(1),
+  });
+
+  app.post<{ Params: { id: string } }>(
+    "/studies/:id/benchmarks",
+    async (req, reply) => {
+      const study = await db("studies").where({ id: req.params.id }).first();
+      if (!study) return reply.code(404).send({ error: "Study not found" });
+
+      const { benchmarks } = BenchmarkSchema.parse(req.body);
+
+      // Delete existing benchmarks for this study, then insert new ones
+      await db("human_benchmarks").where({ study_id: req.params.id }).delete();
+      const rows = benchmarks.map((b) => ({ ...b, study_id: req.params.id }));
+      const inserted = await db("human_benchmarks").insert(rows).returning("*");
+
+      return reply.code(201).send({ inserted: inserted.length, benchmarks: inserted });
+    },
+  );
+
+  // Get benchmarks for a study
+  app.get<{ Params: { id: string } }>(
+    "/studies/:id/benchmarks",
+    async (req, reply) => {
+      const study = await db("studies").where({ id: req.params.id }).first();
+      if (!study) return reply.code(404).send({ error: "Study not found" });
+
+      return db("human_benchmarks").where({ study_id: req.params.id });
+    },
+  );
+
   // Launch a run — generates personas and enqueues jobs
   app.post<{ Params: { id: string } }>(
     "/studies/:id/runs",

@@ -114,6 +114,9 @@ export function startWorker(): Worker {
       await db("runs")
         .where({ id: run_id })
         .increment("tokens_used", result.tokens_used);
+
+      // Check if this run is now complete and trigger analysis
+      await checkRunCompletion(run_id);
     },
     {
       connection: redisConnection,

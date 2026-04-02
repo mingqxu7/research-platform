@@ -6,6 +6,7 @@ evaluates replication criteria, and writes results back to analysis_results.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Optional
 
@@ -185,10 +186,10 @@ async def _run_analysis(
             output.effect_size_type,
             output.effect_ci_lower,
             output.effect_ci_upper,
-            str(output.condition_stats).replace("'", '"'),  # rough JSON
+            json.dumps(output.condition_stats),
             output.levene_stat,
             output.levene_p,
-            str(output.nonparametric_result).replace("'", '"') if output.nonparametric_result else None,
+            json.dumps(output.nonparametric_result) if output.nonparametric_result else None,
             goal1,
             goal2,
             output_bm["effect_size"] if output_bm else None,
