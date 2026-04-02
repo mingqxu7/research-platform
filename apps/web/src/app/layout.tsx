@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="border-b bg-white px-6 py-3 flex items-center gap-6 shadow-sm">
           <span className="font-semibold text-lg tracking-tight">ResearchAI</span>
           <a href="/studies" className="text-sm text-gray-600 hover:text-gray-900">Studies</a>
+          <a href="/templates" className="text-sm text-gray-600 hover:text-gray-900">Templates</a>
         </nav>
         <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
       </body>

@@ -78,12 +78,23 @@ export default function RunResultsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Run Results</h1>
-        <a
-          href={`${API}/runs/${id}/export/csv`}
-          className="px-3 py-1.5 border rounded text-sm hover:bg-gray-50"
-        >
-          Download CSV
-        </a>
+        <div className="flex gap-2">
+          <a
+            href={`${API}/runs/${id}/export/csv`}
+            className="px-3 py-1.5 border rounded text-sm hover:bg-gray-50"
+          >
+            Download CSV
+          </a>
+          <a
+            href={`${API}/runs/${id}/export/report`}
+            target="_blank"
+            rel="noreferrer"
+            className="px-3 py-1.5 border rounded text-sm hover:bg-gray-50 bg-white"
+            title="Opens printable HTML report — use browser Print → Save as PDF"
+          >
+            Download Report (PDF)
+          </a>
+        </div>
       </div>
 
       {/* Run summary */}

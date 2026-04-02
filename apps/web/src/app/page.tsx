@@ -15,7 +15,15 @@ export default function Home() {
         >
           <div className="text-xl mb-1">📋</div>
           <div className="font-medium">New Study</div>
-          <div className="text-sm text-gray-500 mt-1">Define your research design</div>
+          <div className="text-sm text-gray-500 mt-1">Define your research design from scratch</div>
+        </Link>
+        <Link
+          href="/templates"
+          className="block p-5 border rounded-lg bg-white hover:border-blue-400 hover:shadow-sm transition-all"
+        >
+          <div className="text-xl mb-1">📚</div>
+          <div className="font-medium">Browse Templates</div>
+          <div className="text-sm text-gray-500 mt-1">Start from a published research design</div>
         </Link>
         <Link
           href="/studies"
@@ -24,6 +32,14 @@ export default function Home() {
           <div className="text-xl mb-1">🔬</div>
           <div className="font-medium">My Studies</div>
           <div className="text-sm text-gray-500 mt-1">View and manage existing studies</div>
+        </Link>
+        <Link
+          href="/power"
+          className="block p-5 border rounded-lg bg-white hover:border-blue-400 hover:shadow-sm transition-all"
+        >
+          <div className="text-xl mb-1">📊</div>
+          <div className="font-medium">Power Analysis</div>
+          <div className="text-sm text-gray-500 mt-1">Calculate required sample size</div>
         </Link>
       </div>
     </div>

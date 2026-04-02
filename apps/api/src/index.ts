@@ -5,6 +5,7 @@ import { studyRoutes } from "./routes/studies";
 import { runRoutes } from "./routes/runs";
 import { powerRoutes } from "./routes/power";
 import { calibrationRoutes } from "./routes/calibration";
+import { templateRoutes } from "./routes/templates";
 import { db } from "./db/client";
 import { startWorker } from "./queue/experiment-runner";
 import { startCalibrationWorker } from "./queue/calibration-runner";
@@ -27,6 +28,7 @@ app.register(studyRoutes);
 app.register(runRoutes);
 app.register(powerRoutes);
 app.register(calibrationRoutes);
+app.register(templateRoutes);
 
 // Global error handler
 app.setErrorHandler((error, req, reply) => {
