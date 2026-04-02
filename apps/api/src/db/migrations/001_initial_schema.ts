@@ -121,6 +121,49 @@ export async function up(knex: Knex): Promise<void> {
     t.timestamps(true, true);
   });
 
+  // Calibration tables
+  await knex.schema.createTable("calibration_runs", (t) => {
+    t.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    t.uuid("study_id").notNullable().references("id").inTable("studies").onDelete("CASCADE");
+    t.string("status").notNullable().defaultTo("running"); // running | complete | failed
+    t.jsonb("temperatures").notNullable(); // [0.3, 0.5, 0.7, 1.0]
+    t.integer("n_per_temperature").notNullable().defaultTo(30);
+    t.jsonb("human_reference_sds"); // {question_id: sd, ...} — optional
+    t.timestamp("completed_at");
+    t.timestamps(true, true);
+  });
+
+  await knex.schema.createTable("calibration_personas", (t) => {
+    t.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    t.uuid("calibration_run_id").notNullable().references("id").inTable("calibration_runs").onDelete("CASCADE");
+    t.uuid("study_id").notNullable().references("id").inTable("studies").onDelete("CASCADE");
+    t.uuid("condition_id").notNullable().references("id").inTable("conditions").onDelete("CASCADE");
+    t.text("persona_text").notNullable();
+    t.jsonb("demographics").notNullable();
+    t.integer("persona_index").notNullable();
+    t.float("calibration_temperature").notNullable();
+    t.timestamps(true, true);
+  });
+
+  await knex.schema.createTable("calibration_responses", (t) => {
+    t.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    t.uuid("calibration_run_id").notNullable().references("id").inTable("calibration_runs").onDelete("CASCADE");
+    t.uuid("calibration_persona_id").notNullable().references("id").inTable("calibration_personas").onDelete("CASCADE");
+    t.uuid("question_id").notNullable().references("id").inTable("questions").onDelete("CASCADE");
+    t.float("temperature").notNullable();
+    t.float("parsed_value");
+    t.string("parse_status").notNullable().defaultTo("ok");
+    t.timestamps(true, true);
+  });
+
+  await knex.schema.createTable("calibration_results", (t) => {
+    t.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
+    t.uuid("calibration_run_id").notNullable().references("id").inTable("calibration_runs").onDelete("CASCADE");
+    t.float("temperature").notNullable();
+    t.jsonb("question_stats").notNullable(); // {question_id: {mean, sd, se, n}}
+    t.timestamps(true, true);
+  });
+
   // Human benchmarks table (uploaded reference studies)
   await knex.schema.createTable("human_benchmarks", (t) => {
     t.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
@@ -139,6 +182,10 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists("human_benchmarks");
+  await knex.schema.dropTableIfExists("calibration_results");
+  await knex.schema.dropTableIfExists("calibration_responses");
+  await knex.schema.dropTableIfExists("calibration_personas");
+  await knex.schema.dropTableIfExists("calibration_runs");
   await knex.schema.dropTableIfExists("analysis_results");
   await knex.schema.dropTableIfExists("responses");
   await knex.schema.dropTableIfExists("runs");

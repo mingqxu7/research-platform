@@ -4,8 +4,10 @@ import cors from "@fastify/cors";
 import { studyRoutes } from "./routes/studies";
 import { runRoutes } from "./routes/runs";
 import { powerRoutes } from "./routes/power";
+import { calibrationRoutes } from "./routes/calibration";
 import { db } from "./db/client";
 import { startWorker } from "./queue/experiment-runner";
+import { startCalibrationWorker } from "./queue/calibration-runner";
 
 const app = Fastify({
   logger: {
@@ -24,6 +26,7 @@ app.get("/health", async () => ({ status: "ok", service: "api" }));
 app.register(studyRoutes);
 app.register(runRoutes);
 app.register(powerRoutes);
+app.register(calibrationRoutes);
 
 // Global error handler
 app.setErrorHandler((error, req, reply) => {
@@ -40,13 +43,18 @@ async function start(): Promise<void> {
     await db.migrate.latest();
     app.log.info("Database migrations complete");
 
-    // Start Bull worker
+    // Start Bull workers
     const worker = startWorker();
     worker.on("completed", (job) => {
       app.log.info({ jobId: job.id }, "Persona survey completed");
     });
     worker.on("failed", (job, err) => {
       app.log.error({ jobId: job?.id, err }, "Persona survey failed");
+    });
+
+    const calibWorker = startCalibrationWorker();
+    calibWorker.on("failed", (job, err) => {
+      app.log.error({ jobId: job?.id, err }, "Calibration job failed");
     });
 
     const port = Number(process.env.PORT ?? 3000);
