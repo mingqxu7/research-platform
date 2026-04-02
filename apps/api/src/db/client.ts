@@ -9,7 +9,7 @@ export const db = Knex({
   connection: process.env.DATABASE_URL,
   pool: { min: 2, max: 10 },
   migrations: {
-    directory: "./src/db/migrations",
-    extension: "ts",
+    directory: `${__dirname}/migrations`,
+    loadExtensions: [".ts", ".js"],
   },
 });
