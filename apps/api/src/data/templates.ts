@@ -739,4 +739,132 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
       // Q5 (article interest, order_index 4): no published benchmark — Goal 2 returns null
     ],
   },
+  {
+    id: "gain-loss-framing-levin-gaeth-1988",
+    title: "Gain vs. Loss Attribute Framing and Product Evaluation",
+    description:
+      "Replicates Levin & Gaeth (1988)'s foundational finding that equivalent product information framed in gain terms ('75% lean') vs. loss terms ('25% fat') produces different consumer evaluations despite describing the same objective reality. A canonical demonstration of attribute framing effects in consumer judgment.",
+    source_citation:
+      "Levin, I. P., & Gaeth, G. J. (1988). How consumers are affected by the framing of attribute information before and after consuming the product. Journal of Consumer Research, 15(3), 374–378. Meta-analytic benchmark: Levin, Schneider & Gaeth (1998), OBHDP, 76(2), 149–188.",
+    research_area: "Consumer Behavior / Marketing",
+    design_summary:
+      "2-condition between-subjects design. IV: attribute frame (gain/positive vs. loss/negative). Same product, same objective content (75% lean = 25% fat), different valence. DVs: quality evaluation, purchase intent, healthfulness perception, product appeal, overall attitude.",
+    sample_size: 180,
+    demographic_spec: {
+      age_mean: 36,
+      age_sd: 12,
+      gender_distribution: { male: 0.48, female: 0.52 },
+      income_distribution: {
+        low: 0.18,
+        lower_middle: 0.22,
+        middle: 0.30,
+        upper_middle: 0.20,
+        high: 0.10,
+      },
+      education_distribution: {
+        high_school: 0.22,
+        some_college: 0.28,
+        bachelors: 0.33,
+        masters: 0.13,
+        doctorate: 0.04,
+      },
+      occupation_pool: [
+        "teacher", "nurse", "retail manager", "accountant", "sales representative",
+        "administrative assistant", "electrician", "chef", "software developer", "student",
+        "project manager", "social worker", "customer service representative", "warehouse worker", "freelancer",
+      ],
+    },
+    study_context:
+      "You will be asked to evaluate a consumer product. Please read the product description carefully and answer the questions below based on your honest reactions. There are no right or wrong answers — we are interested in your genuine impressions.",
+    conditions: [
+      {
+        name: "Gain Frame (75% lean)",
+        description: "Product described using positive, gain-framed attribute language.",
+        order_index: 0,
+        stimulus_type: "text",
+        stimulus_text:
+          "PRODUCT DESCRIPTION:\n\nFresh Ground Beef Patties\n\nThis ground beef is 75% lean. Made from quality cuts of beef, freshly ground and minimally processed. The 75% lean formula delivers a flavorful, satisfying patty that is a good source of protein and fits into a balanced diet.\n\nPackage: 1 lb · Price: $6.99",
+      },
+      {
+        name: "Loss Frame (25% fat)",
+        description: "Product described using negative, loss-framed attribute language.",
+        order_index: 1,
+        stimulus_type: "text",
+        stimulus_text:
+          "PRODUCT DESCRIPTION:\n\nFresh Ground Beef Patties\n\nThis ground beef contains 25% fat. Made from quality cuts of beef, freshly ground and minimally processed. The 25% fat content delivers a flavorful, satisfying patty that is a good source of protein and fits into a balanced diet.\n\nPackage: 1 lb · Price: $6.99",
+      },
+    ],
+    questions: [
+      {
+        text: "How would you rate the overall quality of this product?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: { "1": "Very low quality", "4": "Moderate quality", "7": "Very high quality" },
+        order_index: 0,
+      },
+      {
+        text: "How likely are you to purchase this product?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: { "1": "Extremely unlikely", "4": "Neither likely nor unlikely", "7": "Extremely likely" },
+        order_index: 1,
+      },
+      {
+        text: "How healthful do you consider this product to be?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: { "1": "Not at all healthful", "4": "Moderately healthful", "7": "Very healthful" },
+        order_index: 2,
+      },
+      {
+        text: "How appealing does this product sound to you?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: { "1": "Not at all appealing", "4": "Moderately appealing", "7": "Very appealing" },
+        order_index: 3,
+      },
+      {
+        text: "How favorable is your overall attitude toward this product?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: { "1": "Very unfavorable", "4": "Neutral", "7": "Very favorable" },
+        order_index: 4,
+      },
+    ],
+    expected_findings:
+      "The gain frame ('75% lean') condition expected to produce significantly more favorable evaluations across all DVs — higher quality ratings, purchase intent, perceived healthfulness, appeal, and attitude — compared to the loss frame ('25% fat') condition, replicating Levin & Gaeth (1988). Effect sizes in the original study ranged from d ≈ 0.3–0.5 for pre-consumption evaluations (larger for healthfulness than purchase intent). The framing effect is a semantic illusion: the two descriptions are mathematically equivalent, yet consumers respond to the valence of the label rather than the underlying content.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "quality_evaluation",
+        effect_size: 0.35,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.18,
+        ci_upper: 0.52,
+        source_citation:
+          "Levin & Gaeth (1988) original study: quality ratings d ≈ 0.3–0.5 for gain vs. loss attribute framing. Levin, Schneider & Gaeth (1998) meta-analysis Type I attribute framing: d̄ = 0.35, 95% CI [0.28, 0.42] across 18 studies.",
+      },
+      {
+        question_order_index: 1,
+        finding_label: "purchase_intent",
+        effect_size: 0.28,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.10,
+        ci_upper: 0.46,
+        source_citation:
+          "Levin, Schneider & Gaeth (1998) meta-analysis attribute framing effects on behavioral intentions: d̄ ≈ 0.25–0.35. Purchase intent effects slightly smaller than quality ratings in the original paradigm.",
+      },
+      {
+        question_order_index: 2,
+        finding_label: "healthfulness_perception",
+        effect_size: 0.44,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.22,
+        ci_upper: 0.66,
+        source_citation:
+          "Levin & Gaeth (1988): fat/lean framing effect largest for healthfulness dimension (d ≈ 0.4–0.6 in original study and replications). Russo et al. (1998) nutrition label framing: d = 0.38–0.47.",
+      },
+      // Q4 (appeal, order_index 3) and Q5 (attitude, order_index 4): no direct published benchmarks — Goal 2 returns null
+    ],
+  },
 ];

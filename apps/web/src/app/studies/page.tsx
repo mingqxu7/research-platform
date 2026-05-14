@@ -38,7 +38,23 @@ export default function StudiesPage() {
 
       {loading && <p className="text-gray-500">Loading…</p>}
       {!loading && studies.length === 0 && (
-        <p className="text-gray-500">No studies yet. Create your first study to get started.</p>
+        <div className="text-center py-12 text-gray-500">
+          <p className="mb-3">No studies yet.</p>
+          <div className="flex justify-center gap-3 text-sm">
+            <Link
+              href="/studies/new"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700"
+            >
+              Create from scratch
+            </Link>
+            <Link
+              href="/templates"
+              className="px-4 py-2 border rounded-md font-medium hover:bg-gray-50"
+            >
+              Browse templates
+            </Link>
+          </div>
+        </div>
       )}
 
       <div className="space-y-3">
