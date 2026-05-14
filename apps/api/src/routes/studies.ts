@@ -45,6 +45,30 @@ const CreateQuestionSchema = z.object({
   order_index: z.number().int().default(0),
 });
 
+const UpdateStudySchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  sample_size: z.number().int().min(10).max(5000).optional(),
+  study_context: z.string().optional(),
+  model_version: z.string().optional(),
+}).strict();
+
+const UpdateConditionSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  order_index: z.number().int().optional(),
+  stimulus_type: z.enum(["text", "image", "both"]).optional(),
+  stimulus_text: z.string().optional(),
+}).strict();
+
+const UpdateQuestionSchema = z.object({
+  text: z.string().min(1).optional(),
+  scale_type: z.enum(["likert", "continuous", "categorical", "open_ended"]).optional(),
+  scale_points: z.number().int().optional(),
+  scale_labels: z.record(z.string()).optional(),
+  order_index: z.number().int().optional(),
+}).strict();
+
 export async function studyRoutes(app: FastifyInstance): Promise<void> {
   // List studies
   app.get("/studies", async (req) => {
@@ -76,9 +100,10 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
     const study = await db("studies").where({ id: req.params.id }).first();
     if (!study) return reply.code(404).send({ error: "Study not found" });
 
+    const body = UpdateStudySchema.parse(req.body);
     const [updated] = await db("studies")
       .where({ id: req.params.id })
-      .update({ ...(req.body as object), updated_at: new Date() })
+      .update({ ...body, updated_at: new Date() })
       .returning("*");
     return updated;
   });
@@ -123,9 +148,10 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
         .first();
       if (!condition) return reply.code(404).send({ error: "Condition not found" });
 
+      const body = UpdateConditionSchema.parse(req.body);
       const [updated] = await db("conditions")
         .where({ id: req.params.conditionId })
-        .update({ ...(req.body as object), updated_at: new Date() })
+        .update({ ...body, updated_at: new Date() })
         .returning("*");
       return updated;
     },
@@ -152,9 +178,14 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
         .first();
       if (!question) return reply.code(404).send({ error: "Question not found" });
 
+      const body = UpdateQuestionSchema.parse(req.body);
+      const updates: Record<string, unknown> = { ...body, updated_at: new Date() };
+      if (body.scale_type !== undefined) {
+        updates.is_open_ended = body.scale_type === "open_ended";
+      }
       const [updated] = await db("questions")
         .where({ id: req.params.questionId })
-        .update({ ...(req.body as object), updated_at: new Date() })
+        .update(updates)
         .returning("*");
       return updated;
     },
