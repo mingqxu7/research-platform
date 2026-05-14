@@ -22,6 +22,7 @@ import { z } from "zod";
 import { db } from "../db/client";
 import { sampleDemographics, buildPersonaText } from "../services/persona-generator";
 import { enqueueCalibrationRun } from "../queue/calibration-runner";
+import { rankTemperaturesByVarianceMatch } from "../services/calibration";
 import type { DemographicSpec } from "../db/types";
 
 const StartCalibrationSchema = z.object({
@@ -148,36 +149,17 @@ export async function calibrationRoutes(app: FastifyInstance): Promise<void> {
         ? JSON.parse(calib.human_reference_sds)
         : {};
 
-      // Rank temperatures by mean absolute divergence from human SDs
-      const ranked = results.map((r) => {
-        const stats: Record<string, { mean: number; sd: number; se: number }> = JSON.parse(r.question_stats);
-        let divergenceScore: number | null = null;
+      const parsedResults = results.map((r) => ({
+        temperature: r.temperature,
+        question_stats: JSON.parse(r.question_stats) as Record<string, { mean: number; sd: number; se: number; n: number }>,
+      }));
 
-        if (Object.keys(humanSds).length > 0) {
-          const divergences = Object.entries(stats)
-            .filter(([qid]) => humanSds[qid] !== undefined)
-            .map(([qid, s]) => Math.abs(s.sd - humanSds[qid]));
-          if (divergences.length > 0) {
-            divergenceScore = divergences.reduce((a, b) => a + b, 0) / divergences.length;
-          }
-        }
-
-        return {
-          temperature: r.temperature,
-          question_stats: stats,
-          divergence_from_human_sd: divergenceScore,
-        };
-      });
-
-      ranked.sort((a, b) => {
-        if (a.divergence_from_human_sd === null || b.divergence_from_human_sd === null) return 0;
-        return a.divergence_from_human_sd - b.divergence_from_human_sd;
-      });
+      const ranked = rankTemperaturesByVarianceMatch(parsedResults, humanSds);
 
       return {
         ...calib,
         temperature_results: ranked,
-        recommended_temperature: ranked[0]?.temperature ?? null,
+        recommended_temperature: ranked[0]?.divergence_from_human_sd !== null ? ranked[0]?.temperature ?? null : null,
       };
     },
   );

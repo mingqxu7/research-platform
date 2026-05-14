@@ -71,6 +71,7 @@ export default function StudyDetailPage() {
   const [benchmarkJson, setBenchmarkJson] = useState("");
   const [benchmarkSaving, setBenchmarkSaving] = useState(false);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
+  const [benchmarkSuccess, setBenchmarkSuccess] = useState(false);
 
   // Launch run state
   const [launching, setLaunching] = useState(false);
@@ -168,6 +169,7 @@ export default function StudyDetailPage() {
   async function uploadBenchmarks(e: React.FormEvent) {
     e.preventDefault();
     setBenchmarkError(null);
+    setBenchmarkSuccess(false);
     setBenchmarkSaving(true);
     let parsed: unknown;
     try {
@@ -184,7 +186,7 @@ export default function StudyDetailPage() {
     });
     if (res.ok) {
       setBenchmarkJson("");
-      alert("Benchmarks uploaded successfully.");
+      setBenchmarkSuccess(true);
     } else {
       const err = await res.json().catch(() => ({ error: "Upload failed" }));
       setBenchmarkError(err.error ?? "Upload failed");
@@ -584,6 +586,11 @@ export default function StudyDetailPage() {
             />
             {benchmarkError && (
               <div className="text-sm text-red-600">{benchmarkError}</div>
+            )}
+            {benchmarkSuccess && (
+              <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded p-2">
+                Benchmarks uploaded successfully.
+              </div>
             )}
             <button
               type="submit"

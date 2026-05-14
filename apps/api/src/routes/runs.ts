@@ -106,21 +106,32 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
       const headers = [
         "persona_index",
         "condition",
+        "age",
+        "gender",
+        "income",
+        "education",
+        "occupation",
         "question",
         "scale_type",
         "value",
         "parse_status",
       ];
-      const rows = responses.map((r) =>
-        [
+      const rows = responses.map((r) => {
+        const d = typeof r.demographics === "string" ? JSON.parse(r.demographics) : (r.demographics ?? {});
+        return [
           r.persona_index,
           `"${r.condition_name}"`,
+          d.age ?? "",
+          d.gender ?? "",
+          d.income ?? "",
+          d.education ?? "",
+          `"${(d.occupation ?? "").replace(/"/g, '""')}"`,
           `"${r.question_text.replace(/"/g, '""')}"`,
           r.scale_type,
           r.parsed_value ?? `"${r.raw_value}"`,
           r.parse_status,
-        ].join(","),
-      );
+        ].join(",");
+      });
 
       const csv = [headers.join(","), ...rows].join("\n");
 
