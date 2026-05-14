@@ -149,6 +149,36 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     ],
     expected_findings:
       "Prior research suggests complex packaging is associated with higher perceived quality and willingness to pay, but simple packaging often yields higher purchase intent in online contexts due to reduced cognitive load.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "purchase_intent",
+        effect_size: 0.28,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.05,
+        ci_upper: 0.51,
+        source_citation: "Reimann et al. (2010) Study 3; aesthetic packaging effects on purchase intent are typically small-to-medium (d ≈ 0.2–0.4); note direction is ambiguous — complex packaging can reduce intent via cognitive overload (Heckler & Childers, 1992)",
+      },
+      // Q1 (WTP, continuous): no standardized Cohen's d benchmark available for continuous WTP measures — Goal 2 returns null
+      {
+        question_order_index: 2,
+        finding_label: "quality_perception",
+        effect_size: 0.45,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.18,
+        ci_upper: 0.72,
+        source_citation: "Underwood et al. (2001) packaging visuals and quality inference; Reimann et al. (2010) aesthetic design and perceived quality; d ≈ 0.4–0.6 across studies (complex > simple for quality perception)",
+      },
+      {
+        question_order_index: 3,
+        finding_label: "aesthetic_appeal",
+        effect_size: 0.68,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.38,
+        ci_upper: 0.98,
+        source_citation: "Bloch et al. (2003) product aesthetics; Hagtvedt & Patrick (2008) aesthetic packaging elaborateness and appeal; d ≈ 0.6–0.9 (complex/elaborate > simple for aesthetic ratings)",
+      },
+    ],
   },
   {
     id: "message-framing-health-behavior",
@@ -250,6 +280,36 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     ],
     expected_findings:
       "Loss frames typically produce stronger behavioral intentions for detection behaviors (e.g., screenings). Gain frames are more effective for prevention behaviors. Both frames expected to differ on persuasiveness ratings.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "behavioral_intent_screening",
+        effect_size: 0.18,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.09,
+        ci_upper: 0.27,
+        source_citation: "Gallagher & Updegraff (2012). 'Health message framing effects on attitudes, intentions, and behavior.' Annals of Behavioral Medicine, 43(1), 101–116. Meta-analysis of 56 studies; d = 0.18 for loss vs. gain frames on detection behavior intentions.",
+      },
+      {
+        question_order_index: 1,
+        finding_label: "message_persuasiveness",
+        effect_size: 0.22,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.05,
+        ci_upper: 0.39,
+        source_citation: "O'Keefe & Jensen (2007). 'The relative persuasiveness of gain-framed and loss-framed messages for encouraging disease detection behaviors.' Journal of Health Communication; d ≈ 0.15–0.30 for loss > gain on persuasiveness in detection contexts.",
+      },
+      // Q2 (personal relevance): no published meta-analytic benchmark for framing × personal relevance — Goal 2 returns null
+      {
+        question_order_index: 3,
+        finding_label: "anxiety_arousal",
+        effect_size: 0.52,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.25,
+        ci_upper: 0.79,
+        source_citation: "Levin et al. (1998). 'All frames are not created equal.' Organizational Behavior and Human Decision Processes; loss-framed health messages consistently produce higher anxiety/concern than gain frames, d ≈ 0.45–0.60.",
+      },
+    ],
   },
   {
     id: "brand-endorser-fit-attitude",
@@ -360,6 +420,44 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     ],
     expected_findings:
       "High-fit endorser condition expected to produce significantly more favorable brand attitudes and higher purchase intention than low-fit and no-endorser conditions. The low-fit condition may produce less favorable outcomes than even the no-endorser baseline.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "brand_attitude_high_vs_low_fit",
+        effect_size: 0.40,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.15,
+        ci_upper: 0.65,
+        source_citation: "Amos et al. (2008). 'Exploring the relationship between celebrity endorser effects and advertising effectiveness.' International Journal of Advertising; meta-analytic d ≈ 0.35–0.50 for high-fit vs. low-fit endorser on brand attitude.",
+      },
+      {
+        question_order_index: 1,
+        finding_label: "purchase_intent_high_vs_low_fit",
+        effect_size: 0.35,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.10,
+        ci_upper: 0.60,
+        source_citation: "Till & Busler (2000). 'The match-up hypothesis.' Journal of Advertising; d ≈ 0.30–0.45 for endorser-brand fit on purchase intent.",
+      },
+      {
+        question_order_index: 2,
+        finding_label: "ad_credibility_high_vs_low_fit",
+        effect_size: 0.45,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.20,
+        ci_upper: 0.70,
+        source_citation: "Erdogan (1999). 'Celebrity endorsement: A literature review.' Journal of Marketing Management; high-fit endorsers rated as substantially more credible, d ≈ 0.40–0.55.",
+      },
+      {
+        question_order_index: 3,
+        finding_label: "spokesperson_fit_manipulation_check",
+        effect_size: 1.20,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.90,
+        ci_upper: 1.50,
+        source_citation: "Kamins & Gupta (1994) manipulation check; perceived fit between athlete endorser and sports drink vs. chef endorser expected to be very large (d ≈ 1.0–1.5).",
+      },
+    ],
   },
   {
     id: "social-proof-choice-behavior",
@@ -456,6 +554,36 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     ],
     expected_findings:
       "Social proof cues expected to significantly increase purchase confidence, expected satisfaction, and purchase intent. Price premium willingness expected to be higher in the social proof condition.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "purchase_confidence",
+        effect_size: 0.42,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.15,
+        ci_upper: 0.69,
+        source_citation: "Sparks & Browning (2011). 'The impact of online reviews on hotel booking intentions and perception of trust.' Tourism Management; d ≈ 0.40–0.55 for social proof cues on purchase confidence.",
+      },
+      {
+        question_order_index: 1,
+        finding_label: "expected_satisfaction",
+        effect_size: 0.35,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.10,
+        ci_upper: 0.60,
+        source_citation: "Chevalier & Mayzlin (2006) archival proxy; Hu et al. (2008) social influence and product satisfaction expectations; d ≈ 0.30–0.45.",
+      },
+      {
+        question_order_index: 2,
+        finding_label: "purchase_intent",
+        effect_size: 0.40,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.18,
+        ci_upper: 0.62,
+        source_citation: "Senecal & Nantel (2004). 'The influence of online product recommendations on consumers' online choices.' Journal of Retailing; d ≈ 0.35–0.50 for social proof and recommendation cues on purchase intent.",
+      },
+      // Q3 (WTP premium, continuous): no standardized Cohen's d benchmark for continuous WTP premium — Goal 2 returns null
+    ],
   },
   {
     id: "arousal-virality-berger-milkman-2012",
