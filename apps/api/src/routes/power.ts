@@ -9,6 +9,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { buildPowerDispatch } from "../services/power";
 
 const PowerQuerySchema = z.object({
   effect_size: z.number().positive(),
@@ -30,23 +31,8 @@ export async function powerRoutes(app: FastifyInstance): Promise<void> {
     const params = PowerQuerySchema.parse(req.query);
     const { effect_size, effect_metric, power, alpha, num_conditions, num_dvs } = params;
 
-    // Bonferroni correction for multiple dependent variables
-    const correctedAlpha = alpha / num_dvs;
-
-    // Map frontend effect_metric + num_conditions → analysis service test_type and effect size.
-    // cohens_d with >2 groups converts to cohens_f (f = d/2) for ANOVA.
-    let test_type: string;
-    let fs_effect_size: number;
-
-    if (num_conditions === 2) {
-      test_type = "welch_t";
-      // cohens_f → cohens_d conversion for 2-group case (d = 2f)
-      fs_effect_size = effect_metric === "cohens_f" ? effect_size * 2 : effect_size;
-    } else {
-      test_type = "welch_anova";
-      // cohens_d → cohens_f conversion for ANOVA (f = d/2)
-      fs_effect_size = effect_metric === "cohens_d" ? effect_size / 2 : effect_size;
-    }
+    const { test_type, effect_size: fs_effect_size, corrected_alpha: correctedAlpha } =
+      buildPowerDispatch({ effect_size, effect_metric, alpha, num_conditions, num_dvs });
 
     const analysisUrl =
       process.env.ANALYSIS_SERVICE_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
