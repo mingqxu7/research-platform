@@ -35,6 +35,8 @@ describe("buildPersonaText", () => {
       ["masters", "a master's degree"],
       ["doctorate", "a doctoral degree"],
       ["vocational", "vocational training"],
+      // Legacy template key used by pre-existing study templates
+      ["graduate", "a graduate degree"],
     ];
     for (const [key, label] of cases) {
       const text = buildPersonaText({ age: 30, gender: "male", income: "middle", education: key, occupation: "teacher" });
@@ -54,6 +56,11 @@ describe("buildPersonaText", () => {
       ["middle", "$50,000–$80,000"],
       ["upper_middle", "$80,000–$120,000"],
       ["high", "over $120,000"],
+      // Legacy template keys used by pre-existing study templates
+      ["under_30k", "under $30,000"],
+      ["30k_60k", "$30,000–$60,000"],
+      ["60k_100k", "$60,000–$100,000"],
+      ["over_100k", "over $100,000"],
     ];
     for (const [key, label] of cases) {
       const text = buildPersonaText({ age: 30, gender: "female", income: key, education: "bachelors", occupation: "engineer" });

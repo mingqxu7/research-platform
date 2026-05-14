@@ -60,6 +60,7 @@ export function buildPersonaText(demographics: GeneratedDemographics): string {
     masters: "a master's degree",
     doctorate: "a doctoral degree",
     vocational: "vocational training",
+    graduate: "a graduate degree",
   };
 
   const incomeMap: Record<string, string> = {
@@ -68,6 +69,10 @@ export function buildPersonaText(demographics: GeneratedDemographics): string {
     middle: "$50,000–$80,000",
     upper_middle: "$80,000–$120,000",
     high: "over $120,000",
+    under_30k: "under $30,000",
+    "30k_60k": "$30,000–$60,000",
+    "60k_100k": "$60,000–$100,000",
+    over_100k: "over $100,000",
   };
 
   const educationStr = educationMap[education] ?? education;
