@@ -64,7 +64,7 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
         text: q.text,
         scale_type: q.scale_type,
         scale_points: q.scale_points ?? null,
-        scale_labels: q.scale_labels ? JSON.stringify(q.scale_labels) : null,
+        scale_labels: q.scale_labels ?? null,
         is_open_ended: q.scale_type === "open_ended",
         order_index: q.order_index,
       }));

@@ -153,7 +153,7 @@ async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
   const questions = await db("questions")
     .where({ study_id: calibRun.study_id, is_open_ended: false });
 
-  const temperatures: number[] = JSON.parse(calibRun.temperatures);
+  const temperatures: number[] = calibRun.temperatures as number[];
 
   for (const temp of temperatures) {
     const responses = await db("calibration_responses")
@@ -181,7 +181,7 @@ async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
     await db("calibration_results").insert({
       calibration_run_id: calibRunId,
       temperature: temp,
-      question_stats: JSON.stringify(statsByQuestion),
+      question_stats: statsByQuestion,
     });
   }
 }

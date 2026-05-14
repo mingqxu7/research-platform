@@ -65,11 +65,9 @@ export async function calibrationRoutes(app: FastifyInstance): Promise<void> {
       const [calib] = await db("calibration_runs")
         .insert({
           study_id: study.id,
-          temperatures: JSON.stringify(body.temperatures),
+          temperatures: body.temperatures,
           n_per_temperature: body.n_per_temperature,
-          human_reference_sds: body.human_reference_sds
-            ? JSON.stringify(body.human_reference_sds)
-            : null,
+          human_reference_sds: body.human_reference_sds ?? null,
           status: "running",
         })
         .returning("*");
@@ -145,13 +143,11 @@ export async function calibrationRoutes(app: FastifyInstance): Promise<void> {
         .where({ calibration_run_id: calib.id })
         .orderBy("temperature");
 
-      const humanSds: Record<string, number> = calib.human_reference_sds
-        ? JSON.parse(calib.human_reference_sds)
-        : {};
+      const humanSds: Record<string, number> = calib.human_reference_sds ?? {};
 
       const parsedResults = results.map((r) => ({
         temperature: r.temperature,
-        question_stats: JSON.parse(r.question_stats) as Record<string, { mean: number; sd: number; se: number; n: number }>,
+        question_stats: r.question_stats as Record<string, { mean: number; sd: number; se: number; n: number }>,
       }));
 
       const ranked = rankTemperaturesByVarianceMatch(parsedResults, humanSds);
