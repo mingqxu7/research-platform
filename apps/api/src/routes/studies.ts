@@ -18,6 +18,11 @@ const DemographicSpecSchema = z.object({
 const CreateStudySchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
+  design_type: z.enum(["between_subjects"], {
+    errorMap: () => ({
+      message: "V0 only supports between_subjects design. within_subjects is not available yet.",
+    }),
+  }),
   sample_size: z.number().int().min(10).max(5000),
   demographic_spec: DemographicSpecSchema,
   study_context: z.string().optional(),

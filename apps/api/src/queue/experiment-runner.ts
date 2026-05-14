@@ -24,7 +24,7 @@ const redisConnection = {
 export const surveyQueue = new Queue(QUEUE_NAME, {
   connection: redisConnection,
   defaultJobOptions: {
-    attempts: 3,
+    attempts: 2,
     backoff: {
       type: "exponential",
       delay: 2000, // start at 2s, doubles each retry

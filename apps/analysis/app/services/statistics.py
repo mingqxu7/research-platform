@@ -20,11 +20,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
 from scipy import stats
 from scipy.stats import mannwhitneyu, kruskal, levene, chi2_contingency
+from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.multitest import multipletests
 
 
@@ -110,15 +113,18 @@ def cramers_v(contingency_table: np.ndarray) -> float:
 
 
 def rank_biserial_r(u_stat: float, n1: int, n2: int) -> float:
-    """Rank-biserial correlation r for Mann-Whitney U."""
-    return 1 - (2 * u_stat) / (n1 * n2)
+    """Rank-biserial correlation r for Mann-Whitney U (positive when group1 > group2)."""
+    return (2 * u_stat) / (n1 * n2) - 1
 
 
-def epsilon_squared(h_stat: float, n_total: int) -> float:
-    """Epsilon-squared effect size for Kruskal-Wallis."""
+def epsilon_squared(h_stat: float, n_total: int, k: int = 2) -> float:
+    """Epsilon-squared effect size for Kruskal-Wallis (Tomczak & Tomczak 2014).
+
+    Formula: (H - (k-1)) / (N-1) where k = number of groups.
+    """
     if n_total <= 1:
         return 0.0
-    return (h_stat - 1) / (n_total - 1)
+    return (h_stat - (k - 1)) / (n_total - 1)
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +235,7 @@ def welch_anova(
     # Kruskal-Wallis (non-parametric counterpart)
     h_stat, kw_p = kruskal(*arrays)
     n_total = sum(len(a) for a in arrays)
-    eps2 = epsilon_squared(h_stat, n_total)
+    eps2 = epsilon_squared(h_stat, n_total, k=len(arrays))
 
     condition_stats = {}
     for name, arr in zip(group_names, arrays):
@@ -257,6 +263,177 @@ def welch_anova(
             "effect_size_type": "epsilon_squared",
         },
         df=df2,  # Welch df2 (denominator df)
+    )
+
+
+def two_way_anova(
+    data: pd.DataFrame,
+    outcome_col: str,
+    factor_a_col: str,
+    factor_b_col: str,
+    question_id: str,
+) -> AnalysisOutput:
+    """Two-way ANOVA with Type II SS and partial η² per factor and interaction.
+
+    Matches R: Anova(lm(outcome ~ factor_a * factor_b), type=2)
+    """
+    _data = data[[outcome_col, factor_a_col, factor_b_col]].copy()
+    _data.columns = pd.Index(["outcome", "fa", "fb"])
+
+    model = smf.ols("outcome ~ C(fa) + C(fb) + C(fa):C(fb)", data=_data).fit()
+    table = anova_lm(model, typ=2)
+
+    ss_a = float(table.loc["C(fa)", "sum_sq"])
+    ss_b = float(table.loc["C(fb)", "sum_sq"])
+    ss_ab = float(table.loc["C(fa):C(fb)", "sum_sq"])
+    ss_error = float(table.loc["Residual", "sum_sq"])
+
+    f_a = float(table.loc["C(fa)", "F"])
+    p_a = float(table.loc["C(fa)", "PR(>F)"])
+    df_a = float(table.loc["C(fa)", "df"])
+
+    f_b = float(table.loc["C(fb)", "F"])
+    p_b = float(table.loc["C(fb)", "PR(>F)"])
+    df_b = float(table.loc["C(fb)", "df"])
+
+    f_ab = float(table.loc["C(fa):C(fb)", "F"])
+    p_ab = float(table.loc["C(fa):C(fb)", "PR(>F)"])
+    df_ab = float(table.loc["C(fa):C(fb)", "df"])
+    df_error = float(table.loc["Residual", "df"])
+
+    peta2_a = partial_eta_squared(ss_a, ss_error)
+    peta2_b = partial_eta_squared(ss_b, ss_error)
+    peta2_ab = partial_eta_squared(ss_ab, ss_error)
+
+    condition_stats: dict[str, dict] = {}
+    for level_a in sorted(_data["fa"].unique()):
+        for level_b in sorted(_data["fb"].unique()):
+            mask = (_data["fa"] == level_a) & (_data["fb"] == level_b)
+            cell_vals = _data.loc[mask, "outcome"].to_numpy(dtype=float)
+            cell_key = f"{level_a}_{level_b}"
+            condition_stats[cell_key] = _describe_group(cell_key, cell_vals)
+
+    return AnalysisOutput(
+        question_id=question_id,
+        test_type="two_way_anova",
+        test_statistic=f_ab,
+        p_value_raw=p_ab,
+        p_value_bonferroni=None,
+        p_value_bh_fdr=None,
+        effect_size=peta2_ab,
+        effect_size_type="partial_eta2",
+        effect_ci_lower=None,
+        effect_ci_upper=None,
+        condition_stats=condition_stats,
+        levene_stat=None,
+        levene_p=None,
+        nonparametric_result={
+            "factor_a": {
+                "name": factor_a_col,
+                "f_statistic": f_a,
+                "p_value": p_a,
+                "partial_eta2": peta2_a,
+                "df": df_a,
+            },
+            "factor_b": {
+                "name": factor_b_col,
+                "f_statistic": f_b,
+                "p_value": p_b,
+                "partial_eta2": peta2_b,
+                "df": df_b,
+            },
+            "interaction": {
+                "name": f"{factor_a_col}:{factor_b_col}",
+                "f_statistic": f_ab,
+                "p_value": p_ab,
+                "partial_eta2": peta2_ab,
+                "df": df_ab,
+            },
+        },
+        df=df_error,
+    )
+
+
+def ancova(
+    data: pd.DataFrame,
+    outcome_col: str,
+    factor_col: str,
+    covariate_cols: list[str],
+    question_id: str,
+) -> AnalysisOutput:
+    """ANCOVA with Type II SS and partial η² for factor and each covariate.
+
+    Matches R: Anova(lm(outcome ~ factor + cov1 + ...), type=2)
+    """
+    cols = [outcome_col, factor_col] + covariate_cols
+    _data = data[cols].copy()
+
+    col_rename: dict[str, str] = {outcome_col: "outcome", factor_col: "factor_grp"}
+    safe_cov_names: list[str] = []
+    for i, cov in enumerate(covariate_cols):
+        safe = f"cov{i}"
+        col_rename[cov] = safe
+        safe_cov_names.append(safe)
+    _data = _data.rename(columns=col_rename)
+
+    cov_terms = " + ".join(safe_cov_names)
+    formula = f"outcome ~ C(factor_grp) + {cov_terms}"
+    model = smf.ols(formula, data=_data).fit()
+    table = anova_lm(model, typ=2)
+
+    ss_factor = float(table.loc["C(factor_grp)", "sum_sq"])
+    f_factor = float(table.loc["C(factor_grp)", "F"])
+    p_factor = float(table.loc["C(factor_grp)", "PR(>F)"])
+    df_factor = float(table.loc["C(factor_grp)", "df"])
+    ss_error = float(table.loc["Residual", "sum_sq"])
+    df_error = float(table.loc["Residual", "df"])
+
+    peta2_factor = partial_eta_squared(ss_factor, ss_error)
+
+    cov_results: list[dict] = []
+    for i, cov_name in enumerate(covariate_cols):
+        safe = f"cov{i}"
+        ss_cov = float(table.loc[safe, "sum_sq"])
+        f_cov = float(table.loc[safe, "F"])
+        p_cov = float(table.loc[safe, "PR(>F)"])
+        peta2_cov = partial_eta_squared(ss_cov, ss_error)
+        cov_results.append({
+            "name": cov_name,
+            "f_statistic": f_cov,
+            "p_value": p_cov,
+            "partial_eta2": peta2_cov,
+        })
+
+    condition_stats: dict[str, dict] = {}
+    for level in sorted(_data["factor_grp"].unique()):
+        vals = _data.loc[_data["factor_grp"] == level, "outcome"].to_numpy(dtype=float)
+        condition_stats[str(level)] = _describe_group(str(level), vals)
+
+    return AnalysisOutput(
+        question_id=question_id,
+        test_type="ancova",
+        test_statistic=f_factor,
+        p_value_raw=p_factor,
+        p_value_bonferroni=None,
+        p_value_bh_fdr=None,
+        effect_size=peta2_factor,
+        effect_size_type="partial_eta2",
+        effect_ci_lower=None,
+        effect_ci_upper=None,
+        condition_stats=condition_stats,
+        levene_stat=None,
+        levene_p=None,
+        nonparametric_result={
+            "factor": {
+                "name": factor_col,
+                "f_statistic": f_factor,
+                "p_value": p_factor,
+                "partial_eta2": peta2_factor,
+                "df": df_factor,
+            },
+            "covariates": cov_results,
+        },
+        df=df_error,
     )
 
 
@@ -382,11 +559,20 @@ def route_test(
     num_conditions: int,
     groups: list[tuple[str, list[float | str]]],
     question_id: str,
+    # Optional: factorial/ANCOVA dispatch
+    study_design: Optional[str] = None,
+    factor_a_col: Optional[str] = None,
+    factor_b_col: Optional[str] = None,
+    outcome_col: Optional[str] = None,
+    covariate_cols: Optional[list[str]] = None,
+    full_data: Optional[pd.DataFrame] = None,
 ) -> AnalysisOutput:
     """
     Auto-detect appropriate test based on scale type and study design.
 
     Routing table:
+    - study_design="two_way_anova" + full_data → Two-way ANOVA (Type II SS, partial η²)
+    - study_design="ancova" + full_data → ANCOVA (partial η²)
     - continuous, 2 conditions → Welch's t-test
     - continuous, 3+ conditions → Welch's one-way ANOVA
     - likert, ≤4 points, any → Mann-Whitney U / Kruskal-Wallis (non-parametric default)
@@ -394,6 +580,24 @@ def route_test(
     - likert, 5-7 points, 3+ → Welch's ANOVA + KW alongside
     - categorical → Chi-square
     """
+    if (
+        study_design == "two_way_anova"
+        and full_data is not None
+        and factor_a_col
+        and factor_b_col
+    ):
+        _outcome = outcome_col or "outcome"
+        return two_way_anova(full_data, _outcome, factor_a_col, factor_b_col, question_id)
+
+    if (
+        study_design == "ancova"
+        and full_data is not None
+        and factor_a_col
+        and covariate_cols
+    ):
+        _outcome = outcome_col or "outcome"
+        return ancova(full_data, _outcome, factor_a_col, covariate_cols, question_id)
+
     if scale_type == "categorical":
         cat_groups = [(name, [str(v) for v in vals]) for name, vals in groups]
         return chi_square_test(cat_groups, question_id)
@@ -430,7 +634,7 @@ def route_test(
             arrays = [arr for _, arr in numeric_groups]
             h_stat, kw_p = kruskal(*arrays)
             n_total = sum(len(a) for a in arrays)
-            eps2 = epsilon_squared(h_stat, n_total)
+            eps2 = epsilon_squared(h_stat, n_total, k=len(arrays))
             return AnalysisOutput(
                 question_id=question_id,
                 test_type="kruskal_wallis",
