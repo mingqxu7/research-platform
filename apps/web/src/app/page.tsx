@@ -34,7 +34,7 @@ export default function Home() {
           <div className="text-sm text-gray-500 mt-1">View and manage existing studies</div>
         </Link>
         <Link
-          href="/power"
+          href="/power/recommend"
           className="block p-5 border rounded-lg bg-white hover:border-blue-400 hover:shadow-sm transition-all"
         >
           <div className="text-xl mb-1">📊</div>
