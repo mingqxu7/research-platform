@@ -29,21 +29,29 @@ export default function PowerRecommendPage() {
   });
   const [result, setResult] = useState<PowerResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function calculate() {
     setLoading(true);
-    const params = new URLSearchParams({
-      effect_size: String(form.effect_size),
-      effect_metric: form.effect_metric,
-      power: String(form.power),
-      alpha: String(form.alpha),
-      num_conditions: String(form.num_conditions),
-      num_dvs: String(form.num_dvs),
-    });
-    const res = await fetch(`${API}/power/recommend?${params}`);
-    const data = await res.json();
-    setResult(data);
-    setLoading(false);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        effect_size: String(form.effect_size),
+        effect_metric: form.effect_metric,
+        power: String(form.power),
+        alpha: String(form.alpha),
+        num_conditions: String(form.num_conditions),
+        num_dvs: String(form.num_dvs),
+      });
+      const res = await fetch(`${API}/power/recommend?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Analysis service error");
+      setResult(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -125,6 +133,12 @@ export default function PowerRecommendPage() {
           {loading ? "Calculating…" : "Calculate"}
         </button>
       </div>
+
+      {error && (
+        <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
+          {error}
+        </div>
+      )}
 
       {result && (
         <div className="mt-6 bg-white border rounded-lg p-6">
