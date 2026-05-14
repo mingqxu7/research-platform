@@ -86,6 +86,26 @@ class TestWelchTTest:
         result = welch_ttest(self.g1, self.g2, "q1")
         assert result.effect_ci_lower < result.effect_size < result.effect_ci_upper
 
+    def test_condition_stats_uses_default_names(self):
+        result = welch_ttest(self.g1, self.g2, "q1")
+        assert "group1" in result.condition_stats
+        assert "group2" in result.condition_stats
+
+    def test_condition_stats_uses_custom_names(self):
+        # Regression: welch_ttest hardcoded "group1"/"group2" keys — fixed in 9a72576
+        result = welch_ttest(self.g1, self.g2, "q1", name1="High Arousal", name2="Low Arousal")
+        assert "High Arousal" in result.condition_stats, (
+            "condition_stats keys should use name1/name2, not hardcoded 'group1'/'group2'"
+        )
+        assert "Low Arousal" in result.condition_stats
+        assert "group1" not in result.condition_stats
+        assert "group2" not in result.condition_stats
+
+    def test_condition_stats_n_correct(self):
+        result = welch_ttest(self.g1, self.g2, "q1", name1="Treatment", name2="Control")
+        assert result.condition_stats["Treatment"]["n"] == 7
+        assert result.condition_stats["Control"]["n"] == 7
+
 
 class TestWelchAnova:
     g1 = ("A", np.array([1, 2, 1, 2, 1], dtype=float))
