@@ -125,7 +125,7 @@ export async function enqueueCalibrationRun(calibRunId: string): Promise<void> {
 
 async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
   const calibRun = await db("calibration_runs").where({ id: calibRunId }).first();
-  if (!calibRun || calibRun.status !== "running") return;
+  if (!calibRun) return;
 
   const [totalResult, completedResult] = await Promise.all([
     db("calibration_personas").where({ calibration_run_id: calibRunId }).count("id as cnt").first(),
@@ -139,6 +139,15 @@ async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
   const completed = Number((completedResult as { cnt: string })?.cnt ?? 0);
 
   if (completed < total) return;
+
+  // Conditional update: only the worker that wins this CAS-like update computes stats.
+  // Without this guard, all ~30 concurrent workers could race into the stat-computation
+  // block, inserting duplicate calibration_results rows per temperature.
+  const updatedCount = await db("calibration_runs")
+    .where({ id: calibRunId, status: "running" })
+    .update({ status: "complete", completed_at: new Date() });
+
+  if (updatedCount === 0) return;
 
   // All done — compute per-temperature variance stats
   const questions = await db("questions")
@@ -175,8 +184,4 @@ async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
       question_stats: JSON.stringify(statsByQuestion),
     });
   }
-
-  await db("calibration_runs")
-    .where({ id: calibRunId })
-    .update({ status: "complete", completed_at: new Date() });
 }

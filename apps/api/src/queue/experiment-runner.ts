@@ -165,13 +165,17 @@ export async function checkRunCompletion(runId: string): Promise<void> {
   const allDone =
     run.completed_personas + run.failed_personas >= run.total_personas;
 
-  if (allDone && run.status === "running") {
-    await db("runs")
-      .where({ id: runId })
+  if (allDone) {
+    // Conditional update: only the worker that wins this CAS-like update triggers analysis.
+    // Without this guard, all ~50 concurrent workers finishing around the same time would
+    // each read status="running" and each call triggerAnalysis, causing N duplicate analyses.
+    const updatedCount = await db("runs")
+      .where({ id: runId, status: "running" })
       .update({ status: "processing", completed_at: new Date() });
 
-    // Trigger Python analysis service
-    await triggerAnalysis(runId);
+    if (updatedCount > 0) {
+      await triggerAnalysis(runId);
+    }
   }
 }
 
