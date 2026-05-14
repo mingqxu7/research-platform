@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistical Methodology — AI Research Replication Platform</title>
+  <meta name="description" content="Full statistical methodology: test selection, effect sizes, multiple comparison corrections, and replication criteria for AI-powered survey studies.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: rgba(255,255,255,0.08);
+      --accent: #7c6ff7;
+      --accent-light: #a89cf8;
+      --text: #e8e8f0;
+      --muted: #7878a0;
+      --success: #4ade80;
+      --warning: #fbbf24;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+    .logo span { color: var(--accent-light); }
+    nav a.back { color: var(--muted); font-size: 0.85rem; text-decoration: none; }
+    nav a.back:hover { color: var(--text); }
+
+    .container { max-width: 820px; margin: 0 auto; padding: 4rem 2rem 6rem; }
+
+    .page-header { margin-bottom: 3.5rem; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(124,111,247,0.1);
+      border: 1px solid rgba(124,111,247,0.25);
+      border-radius: 100px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-light);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 1rem; }
+    .subtitle { color: var(--muted); font-size: 1.05rem; max-width: 600px; }
+
+    h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.5rem 0 0.9rem; color: var(--text); }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--accent-light); }
+    p { color: #c8c8dc; margin-bottom: 0.75rem; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.87em;
+      color: var(--accent-light);
+    }
+
+    .section { margin-bottom: 0.5rem; }
+
+    /* Decision table */
+    .decision-table {
+      width: 100%; border-collapse: collapse;
+      margin: 1.25rem 0 0.5rem;
+      font-size: 0.875rem;
+    }
+    .decision-table th {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.9rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .decision-table td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.9rem;
+      vertical-align: top;
+      color: #c8c8dc;
+    }
+    .decision-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+    /* Effect size table */
+    .effect-table {
+      width: 100%; border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    .effect-table th {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.8rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .effect-table td {
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.8rem;
+      color: #c8c8dc;
+    }
+    .effect-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+      color: #c8c8dc;
+    }
+    .callout.warning { border-left-color: var(--warning); }
+    .callout strong { color: var(--text); }
+
+    .goal-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .goal-block .goal-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      margin-bottom: 0.4rem;
+    }
+    .goal-block p { margin-bottom: 0; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+
+    .ref { font-size: 0.82rem; color: var(--muted); margin-top: 0.25rem; }
+    ul { padding-left: 1.4rem; color: #c8c8dc; margin-bottom: 0.75rem; }
+    ul li { margin-bottom: 0.3rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="../" class="logo">AI Research <span>Platform</span></a>
+  <a href="../" class="back">← Back to home</a>
+</nav>
+
+<div class="container">
+
+  <div class="page-header">
+    <div class="eyebrow">Statistical Methodology</div>
+    <h1>How the analysis engine works</h1>
+    <p class="subtitle">Full documentation of test selection, effect sizes, multiple comparison corrections, and replication criteria. Built on Welch's framework with G*Power-validated power analysis.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- STUDY DESIGN -->
+  <div class="section">
+    <h2>1. Study design (V0)</h2>
+    <p>V0 supports <strong>between-subjects</strong> designs only: each AI persona responds to one condition. Personas are not reused across conditions, eliminating carryover and order effects that complicate within-subjects LLM experiments.</p>
+    <div class="callout warning">
+      <strong>Within-subjects designs are not available in V0.</strong> The API rejects studies with <code>design_type != "between_subjects"</code> with an explicit error message.
+    </div>
+  </div>
+
+  <!-- TEST SELECTION -->
+  <div class="section">
+    <h2>2. Automatic test selection</h2>
+    <p>The analysis engine inspects each question's <code>scale_type</code>, <code>scale_points</code>, and the number of experimental conditions, then routes to the appropriate test. No manual test selection is required.</p>
+
+    <table class="decision-table">
+      <thead>
+        <tr>
+          <th>Scale type</th>
+          <th>Scale points</th>
+          <th>Conditions</th>
+          <th>Primary test</th>
+          <th>Secondary test</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Continuous</td>
+          <td>—</td>
+          <td>2</td>
+          <td>Welch's t-test</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Continuous</td>
+          <td>—</td>
+          <td>3+</td>
+          <td>Welch's one-way ANOVA</td>
+          <td>Games-Howell post-hoc</td>
+        </tr>
+        <tr>
+          <td>Likert</td>
+          <td>≤ 4</td>
+          <td>2</td>
+          <td>Mann-Whitney U</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Likert</td>
+          <td>≤ 4</td>
+          <td>3+</td>
+          <td>Kruskal-Wallis H</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Likert</td>
+          <td>5–7</td>
+          <td>2</td>
+          <td>Welch's t-test</td>
+          <td>Mann-Whitney U</td>
+        </tr>
+        <tr>
+          <td>Likert</td>
+          <td>5–7</td>
+          <td>3+</td>
+          <td>Welch's ANOVA</td>
+          <td>Kruskal-Wallis H</td>
+        </tr>
+        <tr>
+          <td>Categorical</td>
+          <td>—</td>
+          <td>Any</td>
+          <td>Chi-square (χ²)</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Any</td>
+          <td>—</td>
+          <td>Factorial</td>
+          <td>Two-way ANOVA (Type II SS)</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Any</td>
+          <td>—</td>
+          <td>Covariate</td>
+          <td>ANCOVA</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Why Welch's t — not Student's t</h3>
+    <p>LLM temperature and demographic sampling create unequal within-group variance across conditions. Student's t assumes homoscedasticity (equal variances); when violated, it inflates Type I error and produces overconfident confidence intervals. Welch's t-test uses the Welch–Satterthwaite degrees-of-freedom adjustment and is the unconditional default, following Delacre, Lakens &amp; Leys (2017).</p>
+    <p class="ref">Delacre, M., Lakens, D., &amp; Leys, C. (2017). Why psychologists should by default use Welch's t-test instead of Student's t-test. <em>International Review of Social Psychology, 30</em>(1), 92–101.</p>
+
+    <h3>Why not pre-test with Levene's</h3>
+    <p>A common but problematic workflow tests for variance equality with Levene's test and switches to Welch's only if the test rejects. With the small per-condition N common in LLM studies (10–100), Levene's is severely underpowered — it routinely fails to detect unequal variance, causing incorrect use of Student's t. The platform avoids this entirely by using Welch's unconditionally.</p>
+
+    <h3>Games-Howell post-hoc</h3>
+    <p>For significant Welch's ANOVA results, pairwise comparisons use the Games-Howell procedure (does not assume equal variances or equal group sizes), implemented via <code>pingouin.pairwise_gameshowell()</code>. This gives per-pair p-values and effect sizes consistent with the ANOVA's heteroscedastic assumptions.</p>
+  </div>
+
+  <!-- EFFECT SIZES -->
+  <div class="section">
+    <h2>3. Effect sizes</h2>
+    <p>Every test reports a standardized effect size alongside the p-value. Effect sizes are the primary metric for replication assessment (Goal 2 below).</p>
+
+    <table class="effect-table">
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Effect size</th>
+          <th>Small</th>
+          <th>Medium</th>
+          <th>Large</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Welch's t-test</td>
+          <td>Cohen's <em>d</em></td>
+          <td>0.2</td>
+          <td>0.5</td>
+          <td>0.8</td>
+        </tr>
+        <tr>
+          <td>Welch's ANOVA</td>
+          <td>η² (eta-squared)</td>
+          <td>0.01</td>
+          <td>0.06</td>
+          <td>0.14</td>
+        </tr>
+        <tr>
+          <td>Two-way ANOVA</td>
+          <td>Partial η² (per factor + interaction)</td>
+          <td>0.01</td>
+          <td>0.06</td>
+          <td>0.14</td>
+        </tr>
+        <tr>
+          <td>ANCOVA</td>
+          <td>Partial η²</td>
+          <td>0.01</td>
+          <td>0.06</td>
+          <td>0.14</td>
+        </tr>
+        <tr>
+          <td>Mann-Whitney U</td>
+          <td>Rank-biserial <em>r</em> (Cureton/Kerby)</td>
+          <td>0.1</td>
+          <td>0.3</td>
+          <td>0.5</td>
+        </tr>
+        <tr>
+          <td>Kruskal-Wallis H</td>
+          <td>ε² epsilon-squared (Tomczak &amp; Tomczak 2014)</td>
+          <td>0.01</td>
+          <td>0.06</td>
+          <td>0.14</td>
+        </tr>
+        <tr>
+          <td>Chi-square (χ²)</td>
+          <td>Cramér's V</td>
+          <td>0.1</td>
+          <td>0.3</td>
+          <td>0.5</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>95% confidence intervals</strong> are reported for all continuous effect sizes. For ANOVA-family tests, CIs use the η² approximation from the F distribution. Overlapping CIs between AI and human benchmarks drive the Goal 2 replication criterion.
+    </div>
+  </div>
+
+  <!-- MULTIPLE COMPARISONS -->
+  <div class="section">
+    <h2>4. Multiple comparison corrections</h2>
+    <p>When a study has more than one dependent variable (question), uncorrected p-values overstate evidence. The platform applies two corrections simultaneously and reports all three p-values.</p>
+    <ul>
+      <li><strong>Benjamini-Hochberg FDR</strong> (default reporting threshold) — controls the false discovery rate across all questions in the study. Less conservative than Bonferroni; recommended for exploratory replication work.</li>
+      <li><strong>Bonferroni</strong> — family-wise error rate correction. More conservative; reported alongside BH-FDR for completeness.</li>
+      <li><strong>Uncorrected p</strong> — always preserved so researchers can apply their own correction scheme in downstream analysis.</li>
+    </ul>
+    <p>Results tables show all three. The replication criterion (Goal 1) uses the BH-FDR-corrected p-value by default.</p>
+  </div>
+
+  <!-- REPLICATION CRITERIA -->
+  <div class="section">
+    <h2>5. Replication criteria</h2>
+    <p>Each question is scored against two replication goals, modeled on the Viewpoints AI benchmark (Yeykelis et al., 2024/2025).</p>
+
+    <div class="goal-block">
+      <div class="goal-label">Goal 1 — Directional replication</div>
+      <p>The AI study effect is in the <strong>same direction</strong> as the human benchmark AND the BH-FDR-corrected p-value &lt; 0.05. Both conditions must hold. A significant result in the wrong direction counts as a failure.</p>
+    </div>
+
+    <div class="goal-block">
+      <div class="goal-label">Goal 2 — Effect size overlap</div>
+      <p>The <strong>95% confidence interval of the AI effect size overlaps</strong> the human benchmark effect size. This criterion checks whether the magnitude of the AI effect is plausibly consistent with the human population effect, not just directionally correct.</p>
+    </div>
+
+    <p>An overall study-level replication rate is computed as the fraction of questions meeting each goal. The Viewpoints AI (2024) benchmark achieved a 76% main-effect replication rate on Goal 1; this platform targets parity.</p>
+    <p class="ref">Yeykelis, L., et al. (2024/2025). Viewpoints AI: Replicating survey research with large language models. Preprint.</p>
+  </div>
+
+  <!-- POWER ANALYSIS -->
+  <div class="section">
+    <h2>6. Sample size &amp; power analysis</h2>
+    <p>The <code>GET /power/recommend</code> endpoint calculates minimum N per condition. Calculations use statsmodels non-central distributions, validated against G*Power 3.1.</p>
+
+    <table class="effect-table">
+      <thead>
+        <tr><th>Test</th><th>Effect metric</th><th>G*Power reference (power=0.80, α=0.05)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Welch's t (2 groups)</td><td>Cohen's d = 0.5</td><td>64 per group</td></tr>
+        <tr><td>Welch's t (2 groups)</td><td>Cohen's d = 0.8</td><td>26 per group</td></tr>
+        <tr><td>One-way ANOVA (k=3)</td><td>Cohen's f = 0.25</td><td>52 per group</td></tr>
+        <tr><td>Chi-square (df=1)</td><td>Cohen's w = 0.3</td><td>88 total</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>AI variance note:</strong> AI personas typically show lower within-group variance than human panels, so studies may reach significance at smaller N than calculated. However, narrower AI variance can also overstate effect sizes relative to human populations. We recommend not reducing N below the calculated value for a first study.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LIMITATIONS -->
+  <div class="section">
+    <h2>7. Known limitations (V0)</h2>
+    <ul>
+      <li><strong>Between-subjects only</strong> — within-subjects and crossover designs are V1.</li>
+      <li><strong>Open-ended questions excluded from statistics</strong> — text responses are collected but not analyzed in V0.</li>
+      <li><strong>Temperature locked per study</strong> — calibrated once before data collection; not varied dynamically.</li>
+      <li><strong>Single model</strong> — all personas use Claude Sonnet 4.x. Cross-model replication is not assessed in V0.</li>
+      <li><strong>Condition names in 2-group non-parametric tests</strong> — currently display as <code>group1</code>/<code>group2</code> rather than actual condition names (cosmetic; does not affect statistics).</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <p>AI Research Replication Platform · <a href="../">Home</a> · <a href="https://github.com/mingqxu7/research-platform">GitHub</a></p>
+  <p style="margin-top:0.5rem">Built on the methodology of Yeykelis et al. (2024/2025) · Statistical engine: scipy, statsmodels, pingouin</p>
+</footer>
+
+</body>
+</html>
