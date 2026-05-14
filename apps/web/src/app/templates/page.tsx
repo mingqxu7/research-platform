@@ -14,6 +14,7 @@ interface Template {
   condition_count: number;
   question_count: number;
   expected_findings: string;
+  has_benchmarks: boolean;
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
@@ -92,6 +93,14 @@ export default function TemplatesPage() {
                   >
                     {t.research_area}
                   </span>
+                  {t.has_benchmarks && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700"
+                      title="This template includes published effect size benchmarks for Goal 2 replication scoring"
+                    >
+                      Goal 2 scoring
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-gray-600 text-sm mb-3">{t.description}</p>
