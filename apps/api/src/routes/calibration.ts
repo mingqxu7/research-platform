@@ -180,6 +180,20 @@ export async function calibrationRoutes(app: FastifyInstance): Promise<void> {
       const study = await db("studies").where({ id: req.params.id }).first();
       if (!study) return reply.code(404).send({ error: "Study not found" });
 
+      // Reject re-lock if any run has already started — changing temperature
+      // after data collection invalidates the temperature record for those runs.
+      const activeRun = await db("runs")
+        .where({ study_id: req.params.id })
+        .whereIn("status", ["running", "processing", "complete"])
+        .first();
+      if (activeRun) {
+        return reply.code(409).send({
+          error:
+            "Cannot re-lock temperature: study already has active or completed runs. " +
+            "Create a new study to use a different temperature.",
+        });
+      }
+
       const { temperature } = LockTemperatureSchema.parse(req.body);
 
       const [updated] = await db("studies")

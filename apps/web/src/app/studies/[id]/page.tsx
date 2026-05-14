@@ -243,7 +243,7 @@ export default function StudyDetailPage() {
         </div>
       )}
 
-      {!study.temperature && (
+      {study.temperature == null && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
           Temperature not calibrated. Set a temperature on this study before launching a run.
           Spec requires empirical calibration (see Section 7.2).
@@ -285,8 +285,8 @@ export default function StudyDetailPage() {
               </div>
               <div>
                 <div className="text-gray-500 mb-0.5">Temperature</div>
-                <div className={`font-medium ${!study.temperature ? "text-yellow-600" : ""}`}>
-                  {study.temperature ?? "Not set (required before launch)"}
+                <div className={`font-medium ${study.temperature == null ? "text-yellow-600" : ""}`}>
+                  {study.temperature != null ? study.temperature : "Not set (required before launch)"}
                 </div>
               </div>
               <div>
@@ -326,8 +326,8 @@ export default function StudyDetailPage() {
               <li className={study.questions.filter(q => !q.is_open_ended).length > 0 ? "text-green-700" : "text-red-700"}>
                 {study.questions.filter(q => !q.is_open_ended).length > 0 ? "✓" : "✗"} At least 1 non-open-ended question
               </li>
-              <li className={study.temperature ? "text-green-700" : "text-red-700"}>
-                {study.temperature ? "✓" : "✗"} Temperature calibrated
+              <li className={study.temperature != null ? "text-green-700" : "text-red-700"}>
+                {study.temperature != null ? "✓" : "✗"} Temperature calibrated
               </li>
             </ul>
           </div>

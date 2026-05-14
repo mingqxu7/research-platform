@@ -189,14 +189,15 @@ def rank_biserial_r(u_stat: float, n1: int, n2: int) -> float:
     return (2 * u_stat) / (n1 * n2) - 1
 
 
-def epsilon_squared(h_stat: float, n_total: int, k: int = 2) -> float:
+def epsilon_squared(h_stat: float, n_total: int, k: int) -> float:
     """Epsilon-squared effect size for Kruskal-Wallis (Tomczak & Tomczak 2014).
 
-    Formula: (H - (k-1)) / (N-1) where k = number of groups.
+    Formula: max(0, (H - (k-1)) / (N-1)) — clamped because H can be less than
+    k-1 with small samples or many ties, which would yield a negative effect size.
     """
     if n_total <= 1:
         return 0.0
-    return (h_stat - (k - 1)) / (n_total - 1)
+    return max(0.0, (h_stat - (k - 1)) / (n_total - 1))
 
 
 # ---------------------------------------------------------------------------
@@ -208,6 +209,10 @@ def welch_ttest(
     name1: str = "group1", name2: str = "group2",
 ) -> AnalysisOutput:
     """Welch's t-test (equal_var=False) + Levene's diagnostic."""
+    if len(group1) < 2 or len(group2) < 2:
+        raise ValueError(
+            f"welch_ttest requires n>=2 per group; got n={len(group1)}, n={len(group2)}"
+        )
     t_stat, p_val = stats.ttest_ind(group1, group2, equal_var=False)
     d = cohens_d(group1, group2)
     d_ci = cohens_d_ci(d, len(group1), len(group2))
