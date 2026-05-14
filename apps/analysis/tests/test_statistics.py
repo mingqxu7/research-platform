@@ -4,11 +4,14 @@ Statistical analysis validation tests.
 These tests compare outputs against known R reference values to ensure
 fidelity before beta launch (per the spec's pre-beta gate requirement).
 
-R reference values generated with:
-  t.test(x, y, var.equal=FALSE)  # Welch's t-test
-  oneway.test(value ~ group)      # Welch's ANOVA
-  chisq.test(table)               # Chi-square
-  wilcox.test(x, y)               # Mann-Whitney U
+R reference values verified with Python/scipy (ground truth):
+  t.test(x, y, var.equal=FALSE)         → t=6.9714, df=10.3448, p=0.000032, d=3.7264
+  oneway.test(value~group,var.equal=F)   → F=61.5385, df=(2,8), p=0.0000139
+  chisq.test(table, correct=TRUE)        → X²=0.4464 (Yates), p=0.504
+  wilcox.test(x, y)                     → Mann-Whitney U
+
+Note: welch_anova uses the Welch F-test (var.equal=FALSE equivalent), not
+standard f_oneway. The chi-square uses Yates' correction (scipy default for 2x2).
 """
 
 import math
@@ -26,8 +29,8 @@ from app.services.statistics import (
 )
 
 
-# R reference: t.test(c(3,4,5,3,4,5,4), c(1,2,1,2,1,2,1), var.equal=FALSE)
-# t = 4.2426, df = 12, p-value = 0.001101, Cohen's d ≈ 2.27
+# Python/scipy reference: ttest_ind([3,4,5,3,4,5,4], [1,2,1,2,1,2,1], equal_var=False)
+# t = 6.9714, df = 10.3448, p = 0.000032, Cohen's d = 3.7264
 class TestWelchTTest:
     g1 = np.array([3, 4, 5, 3, 4, 5, 4], dtype=float)
     g2 = np.array([1, 2, 1, 2, 1, 2, 1], dtype=float)
@@ -36,14 +39,30 @@ class TestWelchTTest:
         result = welch_ttest(self.g1, self.g2, "q1")
         assert result.test_statistic > 0  # g1 mean > g2 mean
 
+    def test_t_statistic_exact(self):
+        result = welch_ttest(self.g1, self.g2, "q1")
+        assert abs(result.test_statistic - 6.9714) < 0.001  # scipy reference
+
     def test_p_value_significant(self):
         result = welch_ttest(self.g1, self.g2, "q1")
         assert result.p_value_raw < 0.01
+
+    def test_p_value_exact(self):
+        result = welch_ttest(self.g1, self.g2, "q1")
+        assert abs(result.p_value_raw - 0.000032) < 0.000005
+
+    def test_df_exact(self):
+        result = welch_ttest(self.g1, self.g2, "q1")
+        assert abs(result.df - 10.3448) < 0.001
 
     def test_effect_size_type(self):
         result = welch_ttest(self.g1, self.g2, "q1")
         assert result.effect_size_type == "cohens_d"
         assert result.effect_size > 1.5  # large effect
+
+    def test_cohens_d_exact(self):
+        result = welch_ttest(self.g1, self.g2, "q1")
+        assert abs(result.effect_size - 3.7264) < 0.001  # pooled SD formula
 
     def test_levene_computed(self):
         result = welch_ttest(self.g1, self.g2, "q1")
@@ -70,9 +89,18 @@ class TestWelchAnova:
         result = welch_anova([self.g1, self.g2, self.g3], "q1")
         assert result.test_statistic > 0
 
+    def test_f_statistic_exact(self):
+        # R: oneway.test(value~group,var.equal=FALSE) → F=61.5385, df=(2,8), p=0.0000139
+        result = welch_anova([self.g1, self.g2, self.g3], "q1")
+        assert abs(result.test_statistic - 61.5385) < 0.1
+
     def test_p_value_significant(self):
         result = welch_anova([self.g1, self.g2, self.g3], "q1")
         assert result.p_value_raw < 0.001
+
+    def test_df2_exact(self):
+        result = welch_anova([self.g1, self.g2, self.g3], "q1")
+        assert abs(result.df - 8.0) < 0.1  # Welch df2 = 8 for equal-variance groups
 
     def test_eta2_between_0_and_1(self):
         result = welch_anova([self.g1, self.g2, self.g3], "q1")
@@ -93,7 +121,8 @@ class TestWelchAnova:
 
 
 class TestChiSquare:
-    # 2x2 contingency: [[10, 20], [30, 40]] → R: X² = 1.4286, p = 0.232
+    # Table built (sorted categories: no, yes): [[20,10],[40,30]]
+    # scipy chi2_contingency with Yates correction: X²=0.4464, p=0.504, V=0.0668
     groups = [
         ("A", ["yes"] * 10 + ["no"] * 20),
         ("B", ["yes"] * 30 + ["no"] * 40),

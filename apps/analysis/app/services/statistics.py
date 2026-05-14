@@ -171,15 +171,50 @@ def welch_ttest(
     )
 
 
+def _welch_f_oneway(arrays: list[np.ndarray]) -> tuple[float, float, float, float]:
+    """Welch's one-way ANOVA (matches R's oneway.test(var.equal=FALSE)).
+
+    Standard f_oneway assumes homoscedasticity; this uses Welch's F-statistic
+    which is robust to unequal variances across conditions — critical when LLM
+    temperature or persona demographics create differing within-group spread.
+    """
+    k = len(arrays)
+    n_j = np.array([len(a) for a in arrays], dtype=float)
+    mean_j = np.array([np.mean(a) for a in arrays])
+    var_j = np.array([np.var(a, ddof=1) for a in arrays])
+
+    # Guard against zero variance (perfectly constant group)
+    var_j = np.where(var_j == 0, 1e-12, var_j)
+
+    w_j = n_j / var_j          # inverse-variance weights
+    W = np.sum(w_j)
+    m_star = np.sum(w_j * mean_j) / W  # weighted grand mean
+
+    ss_between = np.sum(w_j * (mean_j - m_star) ** 2)
+
+    # Welch's denominator correction
+    h = np.sum((1.0 - w_j / W) ** 2 / (n_j - 1))
+    correction = 1.0 + (2.0 * (k - 2) / (k ** 2 - 1)) * h
+
+    F_welch = (ss_between / (k - 1)) / correction if correction != 0 else float("nan")
+
+    # Degrees of freedom (Satterthwaite)
+    df1 = k - 1
+    denom = 3.0 * np.sum((1.0 - w_j / W) ** 2 / (n_j - 1))
+    df2 = (k ** 2 - 1) / denom if denom != 0 else float("inf")
+
+    p_val = float(stats.f.sf(F_welch, df1, df2)) if not math.isnan(F_welch) else float("nan")
+    return float(F_welch), p_val, float(df1), float(df2)
+
+
 def welch_anova(
     groups: list[tuple[str, np.ndarray]], question_id: str
 ) -> AnalysisOutput:
-    """Welch's one-way ANOVA via scipy (handles unequal variance).
-    Falls back to standard F-test if only 2 groups."""
+    """Welch's one-way ANOVA — robust to unequal variances (matches R oneway.test var.equal=FALSE)."""
     arrays = [g[1] for g in groups]
     group_names = [g[0] for g in groups]
 
-    f_stat, p_val = stats.f_oneway(*arrays)
+    f_stat, p_val, df1, df2 = _welch_f_oneway(arrays)
 
     # η² (one-way)
     grand_mean = np.mean(np.concatenate(arrays))
@@ -221,6 +256,7 @@ def welch_anova(
             "effect_size": eps2,
             "effect_size_type": "epsilon_squared",
         },
+        df=df2,  # Welch df2 (denominator df)
     )
 
 
