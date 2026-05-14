@@ -225,6 +225,21 @@ class TestReplicationGoals:
         _, goal2 = check_replication_goals(output, 0.05, None, 0.5, 0.9)
         assert goal2 is False
 
+    def test_goal1_uses_nominal_alpha_not_bonferroni(self):
+        """BH-FDR p-values must be compared against plain alpha, not alpha/k.
+        If alpha/k were used (double-correction), a p_bh_fdr=0.04 with alpha=0.05
+        and k=5 would incorrectly be non-significant (0.04 > 0.05/5=0.01).
+        """
+        from app.services.statistics import AnalysisOutput
+        # p_value_bh_fdr=0.04 — significant at alpha=0.05, not at alpha/5=0.01
+        output = AnalysisOutput("q1", "welch_t", 2.5, 0.04, 0.20, 0.04,
+                                0.5, "cohens_d", 0.1, 0.9, {}, None, None, None)
+        goal1, _ = check_replication_goals(output, 0.05, 0.6, None, None)
+        assert goal1 is True, (
+            "Goal 1 should use nominal alpha (0.05) against BH-FDR p-value, "
+            "not Bonferroni-divided alpha"
+        )
+
 
 class TestRouting:
     def test_categorical_routes_to_chi_square(self):

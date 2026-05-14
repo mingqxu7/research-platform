@@ -194,7 +194,7 @@ async def _run_analysis(
         bm = benchmark_map.get(output.question_id)
         goal1, goal2 = check_replication_goals(
             output,
-            alpha_corrected=alpha / len(outputs) if outputs else alpha,
+            alpha_corrected=alpha,
             human_effect_size=bm["effect_size"] if bm else None,
             human_ci_lower=bm["ci_lower"] if bm else None,
             human_ci_upper=bm["ci_upper"] if bm else None,
