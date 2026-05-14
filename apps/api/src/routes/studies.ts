@@ -22,7 +22,7 @@ const CreateStudySchema = z.object({
     errorMap: () => ({
       message: "V0 only supports between_subjects design. within_subjects is not available yet.",
     }),
-  }),
+  }).default("between_subjects"),
   sample_size: z.number().int().min(10).max(5000),
   demographic_spec: DemographicSpecSchema,
   study_context: z.string().optional(),

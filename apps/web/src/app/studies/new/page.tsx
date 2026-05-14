@@ -51,6 +51,7 @@ export default function NewStudyPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          design_type: "between_subjects",
           demographic_spec: DEFAULT_DEMOGRAPHIC_SPEC,
         }),
       });
