@@ -579,7 +579,7 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
         effect_size_type: "cohens_d",
         ci_lower: 0.10,
         ci_upper: 0.60,
-        source_citation: "SME estimate; Willard et al. (2018) arousal-sharing replication; Berger et al. 2013-2018 follow-up work",
+        source_citation: "Brady et al. (2017) moral-emotional language and virality (d ≈ 0.3–0.5 for sharing intent); Willard et al. (2018) arousal-sharing replication; Berger & Milkman (2012) archival — no self-report d directly available",
       },
       {
         question_order_index: 1,
@@ -588,7 +588,7 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
         effect_size_type: "cohens_d",
         ci_lower: 0.05,
         ci_upper: 0.51,
-        source_citation: "SME estimate; correlated with sharing intent (Q1)",
+        source_citation: "Brady et al. (2017) as proxy (correlated with sharing intent); no direct email-forward effect size in B&M (2012)",
       },
       {
         question_order_index: 2,
@@ -597,7 +597,7 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
         effect_size_type: "cohens_d",
         ci_lower: 0.80,
         ci_upper: 1.40,
-        source_citation: "SME estimate; large effect expected for manipulation check; Berger & Milkman (2012) Study 1",
+        source_citation: "Keltner & Haidt (2003) awe as high-arousal emotion (d ≈ 1.0–1.5 for arousal manipulation checks); Berger & Milkman (2012) Study 1",
       },
       {
         question_order_index: 3,
@@ -606,7 +606,7 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
         effect_size_type: "cohens_d",
         ci_lower: 0.15,
         ci_upper: 0.65,
-        source_citation: "SME estimate; awe (high-arousal positive) vs. sadness (low-arousal negative); B&M (2012) Table 2",
+        source_citation: "Keltner & Haidt (2003) valence analysis; B&M (2012) Table 2 (awe high-arousal positive vs. sadness low-arousal negative)",
       },
       // Q5 (article interest, order_index 4): no published benchmark — Goal 2 returns null
     ],
