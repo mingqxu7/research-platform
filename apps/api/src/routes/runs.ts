@@ -1,6 +1,15 @@
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/client";
 
+function h(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function runRoutes(app: FastifyInstance): Promise<void> {
   // Get run status and progress
   app.get<{ Params: { id: string } }>("/runs/:id", async (req, reply) => {
@@ -182,12 +191,12 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
         .map(
           (f) => `
         <tr>
-          <td>${f.question_text}</td>
-          <td>${f.test_type ?? "—"}</td>
+          <td>${h(f.question_text)}</td>
+          <td>${h(f.test_type ?? "—")}</td>
           <td>${fmtNum(f.test_statistic, 2)}</td>
           <td>${fmtPval(f.p_value_raw)}</td>
           <td>${fmtPval(f.p_value_bh_fdr)}</td>
-          <td>${fmtNum(f.effect_size, 3)} (${f.effect_size_type ?? "—"})</td>
+          <td>${fmtNum(f.effect_size, 3)} (${h(f.effect_size_type ?? "—")})</td>
           <td>${f.replicated_goal1 == null ? "—" : f.replicated_goal1 ? "✓ Yes" : "✗ No"}</td>
           <td>${f.replicated_goal2 == null ? "—" : f.replicated_goal2 ? "✓ Yes" : "✗ No"}</td>
         </tr>`,
@@ -195,13 +204,13 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
         .join("");
 
       const conditionList = conditions
-        .map((c) => `<li><strong>${c.name}</strong>${c.description ? `: ${c.description}` : ""}</li>`)
+        .map((c) => `<li><strong>${h(c.name)}</strong>${c.description ? `: ${h(c.description)}` : ""}</li>`)
         .join("");
 
       const questionList = questions
         .map(
           (q) =>
-            `<li>${q.text} <em>(${q.scale_type}${q.scale_points ? `, ${q.scale_points}-pt` : ""})</em></li>`,
+            `<li>${h(q.text)} <em>(${h(q.scale_type)}${q.scale_points ? `, ${q.scale_points}-pt` : ""})</em></li>`,
         )
         .join("");
 
@@ -209,7 +218,7 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Study Report — ${study?.title ?? run.study_id}</title>
+<title>Study Report — ${h(study?.title ?? run.study_id)}</title>
 <style>
   body { font-family: Georgia, serif; max-width: 900px; margin: 0 auto; padding: 40px; color: #1a1a1a; font-size: 13px; line-height: 1.6; }
   h1 { font-size: 20px; margin-bottom: 4px; }
@@ -233,11 +242,11 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
 </head>
 <body>
 
-<h1>${study?.title ?? "Study Report"}</h1>
+<h1>${h(study?.title ?? "Study Report")}</h1>
 <div class="meta">
-  Run ID: ${run.id} &nbsp;&bull;&nbsp;
-  Model: ${study?.model_version ?? "—"} &nbsp;&bull;&nbsp;
-  Temperature: ${study?.temperature ?? "not set"} &nbsp;&bull;&nbsp;
+  Run ID: ${h(run.id)} &nbsp;&bull;&nbsp;
+  Model: ${h(study?.model_version ?? "—")} &nbsp;&bull;&nbsp;
+  Temperature: ${h(study?.temperature ?? "not set")} &nbsp;&bull;&nbsp;
   N = ${run.total_personas} &nbsp;&bull;&nbsp;
   Completed: ${run.completed_personas} &nbsp;&bull;&nbsp;
   Generated: ${new Date().toISOString().slice(0, 10)}
@@ -275,8 +284,8 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
   <li><strong>ANOVA effect size:</strong> Partial η² for factorial designs; η² for one-way ANOVA.</li>
   <li><strong>Likert scale treatment:</strong> Parametric tests (Welch's t / ANOVA) applied to Likert items with ≥5 response options; non-parametric alternatives (Mann-Whitney U, Kruskal-Wallis) used for ≤4-point scales. This assumes interval-level measurement of ordinal data — a common social science practice, disclosed here.</li>
   <li><strong>Open-ended questions:</strong> Collected but excluded from statistical analysis in V0. Text analysis module is a V1 addition.</li>
-  <li><strong>Model anchoring:</strong> All personas used the same underlying LLM (${study?.model_version ?? "—"}). Responses may share subtle systematic biases from model-level anchoring toward common response values. This is an inherent limitation of single-model simulation.</li>
-  <li><strong>Temperature:</strong> Fixed at ${study?.temperature ?? "not calibrated"} for this study. Temperature was empirically calibrated pre-run to minimize divergence from human response variance distributions.</li>
+  <li><strong>Model anchoring:</strong> All personas used the same underlying LLM (${h(study?.model_version ?? "—")}). Responses may share subtle systematic biases from model-level anchoring toward common response values. This is an inherent limitation of single-model simulation.</li>
+  <li><strong>Temperature:</strong> Fixed at ${h(study?.temperature ?? "not calibrated")} for this study. Temperature was empirically calibrated pre-run to minimize divergence from human response variance distributions.</li>
 </ul>
 
 <div class="warning">
