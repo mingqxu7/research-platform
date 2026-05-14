@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Research Replication Platform</title>
+  <meta name="description" content="Replicate media effects studies using AI personas — statistically rigorous, faster than traditional surveys.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: rgba(255,255,255,0.08);
+      --accent: #7c6ff7;
+      --accent-light: #a89cf8;
+      --text: #e8e8f0;
+      --muted: #7878a0;
+      --success: #4ade80;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em; }
+    .logo span { color: var(--accent-light); }
+    .badge {
+      background: rgba(124,111,247,0.15);
+      border: 1px solid rgba(124,111,247,0.3);
+      color: var(--accent-light);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* Hero */
+    .hero {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 7rem 2rem 5rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(124,111,247,0.1);
+      border: 1px solid rgba(124,111,247,0.25);
+      border-radius: 100px;
+      padding: 0.35rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent-light);
+      margin-bottom: 2rem;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+    h1 em { font-style: normal; color: var(--accent-light); }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 3rem;
+    }
+
+    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.85rem 2rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-number { font-size: 2rem; font-weight: 800; color: var(--accent-light); letter-spacing: -0.03em; }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Features */
+    .section { max-width: 1100px; margin: 0 auto; padding: 6rem 2rem; }
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .section-sub { text-align: center; color: var(--muted); margin-bottom: 3.5rem; font-size: 1.05rem; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(124,111,247,0.4); }
+    .feature-icon { font-size: 1.75rem; margin-bottom: 1rem; }
+    .feature-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+
+    /* How it works */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
+    .step { position: relative; }
+    .step-num {
+      width: 40px; height: 40px;
+      background: rgba(124,111,247,0.15);
+      border: 1px solid rgba(124,111,247,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem; color: var(--accent-light);
+      margin-bottom: 1rem;
+    }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { color: var(--muted); font-size: 0.875rem; line-height: 1.7; }
+
+    /* Use cases */
+    .usecases { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+    .usecase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      font-size: 0.9rem;
+    }
+    .usecase strong { display: block; margin-bottom: 0.35rem; font-weight: 600; }
+    .usecase span { color: var(--muted); }
+
+    /* Beta CTA */
+    .beta-cta {
+      background: linear-gradient(135deg, rgba(124,111,247,0.12), rgba(124,111,247,0.04));
+      border: 1px solid rgba(124,111,247,0.25);
+      border-radius: 16px;
+      padding: 4rem 2rem;
+      text-align: center;
+      margin: 0 2rem;
+    }
+    .beta-cta h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.02em; }
+    .beta-cta p { color: var(--muted); margin-bottom: 2rem; font-size: 1.05rem; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* Methodology tag */
+    .method-tag {
+      display: inline-block;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.25);
+      color: var(--success);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">AI Research <span>Replication</span></div>
+    <div class="badge">Beta Access Opening</div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <div class="dot"></div>
+        Platform launching — beta researchers being onboarded
+      </div>
+      <h1>Replicate media effects studies with <em>AI personas</em></h1>
+      <p class="hero-sub">
+        Build between-subjects survey studies, generate statistically independent AI respondents,
+        and receive publication-ready analysis — in minutes, not months.
+      </p>
+      <div class="cta-group">
+        <a href="https://github.com/mingqxu7/research-platform" class="btn-primary">Request Beta Access</a>
+        <a href="https://github.com/mingqxu7/research-platform" class="btn-ghost">View on GitHub</a>
+      </div>
+    </section>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-number">10×</div>
+        <div class="stat-label">Faster than traditional surveys</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">$0</div>
+        <div class="stat-label">Per-respondent cost</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Methodology disclosed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">BH+</div>
+        <div class="stat-label">FDR correction applied</div>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-title">Everything a survey study needs</div>
+      <div class="section-sub">From design to PDF report — the full research pipeline in one platform.</div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧪</div>
+          <div class="feature-title">Study Builder</div>
+          <div class="feature-desc">Configure conditions, questions (Likert, continuous, binary, open-ended), and stimuli. Study templates included for common media effects designs.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-title">AI Persona Generation</div>
+          <div class="feature-desc">Each AI respondent is an independent LLM API call with no shared context. Persona temperature calibrated against human benchmark effect sizes.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Statistical Analysis</div>
+          <div class="feature-desc">Automatic t-tests, Mann-Whitney U, Cohen's d, Cliff's delta, Benjamini-Hochberg FDR correction, and Bonferroni. Effect size classification included.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔬</div>
+          <div class="feature-title">Replication Scoring</div>
+          <div class="feature-desc">Evaluates whether your AI study replicates the original published finding. Customizable significance and effect size thresholds.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <div class="feature-title">Publication-Ready Reports</div>
+          <div class="feature-desc">Export HTML reports with full methodology disclosure, effect size tables, and per-question results. Ready for supplementary materials.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Parallel Execution</div>
+          <div class="feature-desc">Persona surveys run via an async job queue. Run 50+ personas in parallel — complete a study in minutes, not hours.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="section-title">How it works</div>
+      <div class="section-sub">Four steps from hypothesis to validated finding.</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Design your study</h3>
+          <p>Define conditions, questions, and stimulus text. Choose a template or build from scratch. Set your target persona count and calibration settings.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Run calibration</h3>
+          <p>The platform calibrates LLM temperature against a reference effect size from published human data — so your AI responses match the expected human variance.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Execute the study</h3>
+          <p>Independent AI personas are assigned to conditions and respond to your survey. Each call is isolated with no shared context between respondents.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Analyze &amp; export</h3>
+          <p>Statistical tests run automatically. Review per-question findings, replication status, and export a full report with methodology disclosure.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="section-title">Use cases</div>
+      <div class="section-sub">Designed for researchers replicating or generalizing published media effects findings.</div>
+      <div class="usecases">
+        <div class="usecase"><strong>Replication Studies</strong><span>Verify that a published finding holds when AI personas replace human participants.</span></div>
+        <div class="usecase"><strong>Generalization Tests</strong><span>Extend a finding to new demographic profiles, stimuli, or cultural contexts.</span></div>
+        <div class="usecase"><strong>Power Analysis</strong><span>Estimate required sample sizes before running expensive human surveys.</span></div>
+        <div class="usecase"><strong>Pilot Surveys</strong><span>Test question wording and design before fielding to human participants.</span></div>
+        <div class="usecase"><strong>Teaching Tool</strong><span>Demonstrate experimental design and statistical analysis in research methods courses.</span></div>
+        <div class="usecase"><strong>Effect Size Exploration</strong><span>Understand how stimulus variations modulate effect sizes across conditions.</span></div>
+      </div>
+
+      <div style="margin-top:3rem; text-align:center;">
+        <div style="color:var(--muted); font-size:0.85rem; margin-bottom:1rem;">Statistical methods</div>
+        <span class="method-tag">t-test</span>
+        <span class="method-tag">Mann-Whitney U</span>
+        <span class="method-tag">Cohen's d</span>
+        <span class="method-tag">Cliff's delta</span>
+        <span class="method-tag">rank_biserial_r</span>
+        <span class="method-tag">BH FDR</span>
+        <span class="method-tag">Bonferroni</span>
+        <span class="method-tag">Kruskal-Wallis</span>
+        <span class="method-tag">ANOVA</span>
+        <span class="method-tag">ANCOVA</span>
+      </div>
+    </section>
+
+    <div class="beta-cta">
+      <h2>Join the beta — limited researcher access</h2>
+      <p>We're onboarding a small cohort of academic and industry researchers.<br>Bring your replication study and we'll help you get it running.</p>
+      <div class="cta-group">
+        <a href="https://github.com/mingqxu7/research-platform" class="btn-primary">Request Beta Access</a>
+      </div>
+      <div style="margin-top:1.5rem; font-size:0.8rem; color:var(--muted);">
+        Powered by Claude · Built on open methodology · Full source on GitHub
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>AI Research Replication Platform · Built on the methodology of Yeykelis et al. (2024/2025) ·
+      <a href="https://github.com/mingqxu7/research-platform">GitHub</a>
+    </p>
+  </footer>
+
+</body>
+</html>
