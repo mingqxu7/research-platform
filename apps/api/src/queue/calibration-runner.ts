@@ -41,7 +41,7 @@ export interface CalibrationJobData {
 }
 
 export function startCalibrationWorker(): Worker {
-  return new Worker<CalibrationJobData>(
+  const worker = new Worker<CalibrationJobData>(
     QUEUE_NAME,
     async (job: Job<CalibrationJobData>) => {
       const {
@@ -97,6 +97,23 @@ export function startCalibrationWorker(): Worker {
     },
     { connection: redisConnection, concurrency: MAX_CONCURRENCY },
   );
+
+  // When a job exhausts all retries before inserting any response rows, the
+  // distinct-persona count in checkCalibrationCompletion never reaches the
+  // total, leaving the calibration run stuck in "running" forever.
+  // Increment failed_personas so the completion check can still fire.
+  worker.on("failed", async (job, _err) => {
+    if (!job) return;
+    const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 1);
+    if (!isLastAttempt) return;
+    const { calibration_run_id } = job.data as CalibrationJobData;
+    await db("calibration_runs")
+      .where({ id: calibration_run_id })
+      .increment("failed_personas", 1);
+    await checkCalibrationCompletion(calibration_run_id);
+  });
+
+  return worker;
 }
 
 export async function enqueueCalibrationRun(calibRunId: string): Promise<void> {
@@ -137,8 +154,11 @@ async function checkCalibrationCompletion(calibRunId: string): Promise<void> {
 
   const total = Number((totalResult as { cnt: string })?.cnt ?? 0);
   const completed = Number((completedResult as { cnt: string })?.cnt ?? 0);
+  // failed_personas counts jobs that exhausted all retries without inserting
+  // any response rows — they never appear in the distinct-persona count above.
+  const failed = Number(calibRun.failed_personas ?? 0);
 
-  if (completed < total) return;
+  if (completed + failed < total) return;
 
   // Conditional update: only the worker that wins this CAS-like update computes stats.
   // Without this guard, all ~30 concurrent workers could race into the stat-computation

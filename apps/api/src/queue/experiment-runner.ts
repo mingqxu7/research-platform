@@ -47,7 +47,7 @@ export interface PersonaJobData {
 
 /** Worker — processes one persona survey job */
 export function startWorker(): Worker {
-  return new Worker<PersonaJobData>(
+  const worker = new Worker<PersonaJobData>(
     QUEUE_NAME,
     async (job: Job<PersonaJobData>) => {
       const {
@@ -127,6 +127,24 @@ export function startWorker(): Worker {
       concurrency: MAX_CONCURRENCY,
     },
   );
+
+  // When a job exhausts all BullMQ retries without completing, the job handler
+  // never increments completed_personas, so checkRunCompletion never fires and
+  // the run stays stuck in "running" forever.  Count exhausted jobs as completed
+  // (failed) so the run can still transition to complete/failed state.
+  worker.on("failed", async (job, _err) => {
+    if (!job) return;
+    const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 1);
+    if (!isLastAttempt) return;
+    const { run_id } = job.data as PersonaJobData;
+    await db("runs")
+      .where({ id: run_id })
+      .increment("completed_personas", 1)
+      .increment("failed_personas", 1);
+    await checkRunCompletion(run_id);
+  });
+
+  return worker;
 }
 
 /** Enqueue all personas for a run */
