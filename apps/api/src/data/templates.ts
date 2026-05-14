@@ -558,6 +558,6 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
       },
     ],
     expected_findings:
-      "High-arousal (awe) condition expected to produce significantly higher sharing intent than low-arousal (sadness) condition, replicating Berger & Milkman (2012). Arousal activation ratings expected to be higher in the awe condition; valence expected to be more positive in the awe condition.",
+      "High-arousal (awe) condition expected to produce significantly higher sharing intent than low-arousal (sadness) condition, replicating Berger & Milkman (2012). Arousal activation ratings expected to be higher in the awe condition; valence expected to be more positive in the awe condition. Note: the manipulation confounds arousal and valence — awe is high-arousal positive, sadness is low-arousal negative — so observed differences cannot be attributed to arousal alone. This mirrors the original B&M (2012) Study 2 design; a matched-valence condition (e.g., awe vs. contentment) would be needed to isolate the pure arousal effect.",
   },
 ];
