@@ -560,11 +560,15 @@ class TestEpsilonSquaredRegression:
         eps2 = epsilon_squared(h_stat=20.0, n_total=25, k=5)
         assert abs(eps2 - (16 / 24)) < 1e-9
 
-    def test_default_k_is_two_for_backwards_compat(self):
-        # If k omitted, default=2 should match old 2-group behaviour
-        eps2_default = epsilon_squared(h_stat=8.0, n_total=20)
-        eps2_k2 = epsilon_squared(h_stat=8.0, n_total=20, k=2)
-        assert abs(eps2_default - eps2_k2) < 1e-9
+    def test_k_required_no_silent_default(self):
+        # k is now a required argument — no silent k=2 default that could
+        # produce wrong effect sizes for 3+ group Kruskal-Wallis tests.
+        import inspect
+        sig = inspect.signature(epsilon_squared)
+        assert sig.parameters["k"].default is inspect.Parameter.empty, (
+            "epsilon_squared must require k explicitly; a default k=2 silently "
+            "produces wrong effect sizes for k>2 Kruskal-Wallis tests"
+        )
 
     def test_zero_for_small_n(self):
         eps2 = epsilon_squared(h_stat=2.0, n_total=1, k=2)
