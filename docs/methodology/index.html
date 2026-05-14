@@ -288,7 +288,7 @@
     <p>A common but problematic workflow tests for variance equality with Levene's test and switches to Welch's only if the test rejects. With the small per-condition N common in LLM studies (10–100), Levene's is severely underpowered — it routinely fails to detect unequal variance, causing incorrect use of Student's t. The platform avoids this entirely by using Welch's unconditionally.</p>
 
     <h3>Games-Howell post-hoc</h3>
-    <p>For significant Welch's ANOVA results, pairwise comparisons use the Games-Howell procedure (does not assume equal variances or equal group sizes), implemented via <code>pingouin.pairwise_gameshowell()</code>. This gives per-pair p-values and effect sizes consistent with the ANOVA's heteroscedastic assumptions.</p>
+    <p>For significant Welch's ANOVA results, pairwise comparisons use the Games-Howell procedure (does not assume equal variances or equal group sizes), implemented using <code>scipy.stats.studentized_range</code> with per-pair Welch–Satterthwaite degrees of freedom. This gives per-pair p-values and effect sizes consistent with the ANOVA's heteroscedastic assumptions.</p>
   </div>
 
   <!-- EFFECT SIZES -->
@@ -407,7 +407,7 @@
       <tbody>
         <tr><td>Welch's t (2 groups)</td><td>Cohen's d = 0.5</td><td>64 per group</td></tr>
         <tr><td>Welch's t (2 groups)</td><td>Cohen's d = 0.8</td><td>26 per group</td></tr>
-        <tr><td>One-way ANOVA (k=3)</td><td>Cohen's f = 0.25</td><td>52 per group</td></tr>
+        <tr><td>One-way ANOVA (k=3)</td><td>Cohen's f = 0.25</td><td>53 per group</td></tr>
         <tr><td>Chi-square (df=1)</td><td>Cohen's w = 0.3</td><td>88 total</td></tr>
       </tbody>
     </table>
@@ -427,7 +427,6 @@
       <li><strong>Open-ended questions excluded from statistics</strong> — text responses are collected but not analyzed in V0.</li>
       <li><strong>Temperature locked per study</strong> — calibrated once before data collection; not varied dynamically.</li>
       <li><strong>Single model</strong> — all personas use Claude Sonnet 4.x. Cross-model replication is not assessed in V0.</li>
-      <li><strong>Condition names in 2-group non-parametric tests</strong> — currently display as <code>group1</code>/<code>group2</code> rather than actual condition names (cosmetic; does not affect statistics).</li>
     </ul>
   </div>
 
@@ -435,7 +434,7 @@
 
 <footer>
   <p>AI Research Replication Platform · <a href="../">Home</a> · <a href="https://github.com/mingqxu7/research-platform">GitHub</a></p>
-  <p style="margin-top:0.5rem">Built on the methodology of Yeykelis et al. (2024/2025) · Statistical engine: scipy, statsmodels, pingouin</p>
+  <p style="margin-top:0.5rem">Built on the methodology of Yeykelis et al. (2024/2025) · Statistical engine: scipy, statsmodels</p>
 </footer>
 
 </body>
