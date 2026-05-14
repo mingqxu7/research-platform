@@ -57,7 +57,7 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
       }));
       await db("conditions").insert(conditionRows);
 
-      // Create questions
+      // Create questions and capture returned IDs for benchmark seeding
       const questionRows = template.questions.map((q) => ({
         study_id: study.id,
         text: q.text,
@@ -67,11 +67,35 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
         is_open_ended: q.scale_type === "open_ended",
         order_index: q.order_index,
       }));
-      await db("questions").insert(questionRows);
+      const insertedQuestions = await db("questions").insert(questionRows).returning(["id", "order_index"]);
+
+      // Seed human benchmarks if the template defines them
+      let benchmarks_seeded = 0;
+      if (template.question_benchmarks?.length) {
+        const indexToId = new Map(insertedQuestions.map((q: { id: string; order_index: number }) => [q.order_index, q.id]));
+        const benchmarkRows = template.question_benchmarks
+          .filter((b) => indexToId.has(b.question_order_index))
+          .map((b) => ({
+            study_id: study.id,
+            question_id: indexToId.get(b.question_order_index),
+            finding_label: b.finding_label,
+            effect_size: b.effect_size,
+            effect_size_type: b.effect_size_type,
+            ci_lower: b.ci_lower ?? null,
+            ci_upper: b.ci_upper ?? null,
+            p_value: b.p_value ?? null,
+            source_citation: b.source_citation ?? null,
+          }));
+        if (benchmarkRows.length > 0) {
+          await db("human_benchmarks").insert(benchmarkRows);
+          benchmarks_seeded = benchmarkRows.length;
+        }
+      }
 
       return reply.code(201).send({
         study_id: study.id,
         message: `Study created from template: ${template.title}`,
+        benchmarks_seeded,
       });
     },
   );

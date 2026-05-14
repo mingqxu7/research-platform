@@ -19,6 +19,17 @@ export interface TemplateQuestion {
   order_index: number;
 }
 
+export interface TemplateBenchmark {
+  question_order_index: number;
+  finding_label: string;
+  effect_size: number;
+  effect_size_type: string;
+  ci_lower?: number;
+  ci_upper?: number;
+  p_value?: number;
+  source_citation?: string;
+}
+
 export interface StudyTemplate {
   id: string;
   title: string;
@@ -39,6 +50,7 @@ export interface StudyTemplate {
   conditions: TemplateCondition[];
   questions: TemplateQuestion[];
   expected_findings: string;
+  question_benchmarks?: TemplateBenchmark[];
 }
 
 export const STUDY_TEMPLATES: StudyTemplate[] = [
@@ -559,5 +571,44 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     ],
     expected_findings:
       "High-arousal (awe) condition expected to produce significantly higher sharing intent than low-arousal (sadness) condition, replicating Berger & Milkman (2012). Arousal activation ratings expected to be higher in the awe condition; valence expected to be more positive in the awe condition. Note: the manipulation confounds arousal and valence — awe is high-arousal positive, sadness is low-arousal negative — so observed differences cannot be attributed to arousal alone. This mirrors the original B&M (2012) Study 2 design; a matched-valence condition (e.g., awe vs. contentment) would be needed to isolate the pure arousal effect.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "sharing_intent",
+        effect_size: 0.35,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.10,
+        ci_upper: 0.60,
+        source_citation: "SME estimate; Willard et al. (2018) arousal-sharing replication; Berger et al. 2013-2018 follow-up work",
+      },
+      {
+        question_order_index: 1,
+        finding_label: "email_send_intent",
+        effect_size: 0.28,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.05,
+        ci_upper: 0.51,
+        source_citation: "SME estimate; correlated with sharing intent (Q1)",
+      },
+      {
+        question_order_index: 2,
+        finding_label: "arousal_activation",
+        effect_size: 1.10,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.80,
+        ci_upper: 1.40,
+        source_citation: "SME estimate; large effect expected for manipulation check; Berger & Milkman (2012) Study 1",
+      },
+      {
+        question_order_index: 3,
+        finding_label: "emotional_valence",
+        effect_size: 0.42,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.15,
+        ci_upper: 0.65,
+        source_citation: "SME estimate; awe (high-arousal positive) vs. sadness (low-arousal negative); B&M (2012) Table 2",
+      },
+      // Q5 (article interest, order_index 4): no published benchmark — Goal 2 returns null
+    ],
   },
 ];
