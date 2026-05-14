@@ -26,9 +26,10 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 from scipy import stats
-from scipy.stats import mannwhitneyu, kruskal, levene, chi2_contingency
+from scipy.stats import mannwhitneyu, kruskal, levene, chi2_contingency, studentized_range
 from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.multitest import multipletests
+from statsmodels.stats.power import TTestIndPower, FTestAnovaPower, GofChisquarePower
 
 
 @dataclass
@@ -60,6 +61,77 @@ class AnalysisOutput:
     nonparametric_result: Optional[dict]
     df: Optional[float] = None  # degrees of freedom
     error: Optional[str] = None
+
+
+@dataclass
+class PairwiseComparison:
+    group1: str
+    group2: str
+    mean_diff: float        # mean(group1) - mean(group2)
+    se: float               # Welch SE = sqrt(var1/n1 + var2/n2)
+    df: float               # Welch-Satterthwaite df
+    q_statistic: float      # studentized range q = |mean_diff| / (se / sqrt(2))
+    p_value: float          # from studentized range distribution
+    significant: bool       # p < 0.05 (two-sided familywise)
+
+
+# ---------------------------------------------------------------------------
+# Games-Howell post-hoc test
+# ---------------------------------------------------------------------------
+
+def games_howell_posthoc(
+    groups: list[tuple[str, np.ndarray]],
+    alpha: float = 0.05,
+) -> list[PairwiseComparison]:
+    """Games-Howell pairwise post-hoc test for Welch ANOVA.
+
+    Controls FWER without assuming equal variances or equal group sizes.
+    Uses the Studentized range distribution (same family as Tukey HSD,
+    but with per-pair Welch degrees of freedom).
+
+    Matches the formulation in Games & Howell (1976) and pingouin's
+    `pairwise_gameshowell()` output.
+    """
+    k = len(groups)
+    results: list[PairwiseComparison] = []
+
+    for i in range(k):
+        for j in range(i + 1, k):
+            name_i, arr_i = groups[i]
+            name_j, arr_j = groups[j]
+            n_i, n_j = len(arr_i), len(arr_j)
+            m_i, m_j = float(np.mean(arr_i)), float(np.mean(arr_j))
+            v_i = float(np.var(arr_i, ddof=1))
+            v_j = float(np.var(arr_j, ddof=1))
+
+            vi_ni = v_i / n_i
+            vj_nj = v_j / n_j
+            se = math.sqrt(vi_ni + vj_nj)
+
+            # Welch-Satterthwaite df for this pair
+            if (n_i - 1) == 0 or (n_j - 1) == 0:
+                df_ij = 1.0
+            else:
+                df_ij = (vi_ni + vj_nj) ** 2 / (
+                    vi_ni ** 2 / (n_i - 1) + vj_nj ** 2 / (n_j - 1)
+                )
+
+            # Studentized range statistic
+            q = abs(m_i - m_j) / (se / math.sqrt(2))
+            p = float(studentized_range.sf(q, k=k, df=df_ij))
+
+            results.append(PairwiseComparison(
+                group1=name_i,
+                group2=name_j,
+                mean_diff=round(m_i - m_j, 10),
+                se=round(se, 10),
+                df=round(df_ij, 4),
+                q_statistic=round(q, 6),
+                p_value=round(p, 6),
+                significant=p < alpha,
+            ))
+
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +309,18 @@ def welch_anova(
     n_total = sum(len(a) for a in arrays)
     eps2 = epsilon_squared(h_stat, n_total, k=len(arrays))
 
+    # Games-Howell post-hoc pairwise comparisons
+    posthoc = games_howell_posthoc(groups)
+    posthoc_dicts = [
+        {
+            "group1": p.group1, "group2": p.group2,
+            "mean_diff": p.mean_diff, "se": p.se, "df": p.df,
+            "q_statistic": p.q_statistic, "p_value": p.p_value,
+            "significant": p.significant,
+        }
+        for p in posthoc
+    ]
+
     condition_stats = {}
     for name, arr in zip(group_names, arrays):
         condition_stats[name] = _describe_group(name, arr)
@@ -261,6 +345,7 @@ def welch_anova(
             "p_value": float(kw_p),
             "effect_size": eps2,
             "effect_size_type": "epsilon_squared",
+            "posthoc_games_howell": posthoc_dicts,
         },
         df=df2,  # Welch df2 (denominator df)
     )
@@ -667,6 +752,135 @@ def route_test(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Power Analysis
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PowerAnalysisResult:
+    test_type: str
+    solve_for: str                   # "n", "power", or "effect_size"
+    effect_size: float
+    alpha: float
+    power: float
+    n_per_group: int
+    n_groups: int
+    effect_size_label: str           # "cohens_d", "cohens_f", "cohens_w"
+    notes: str = ""
+
+
+def power_analysis(
+    test_type: str,
+    effect_size: float,
+    alpha: float = 0.05,
+    power: Optional[float] = None,
+    n_per_group: Optional[int] = None,
+    n_groups: int = 2,
+) -> PowerAnalysisResult:
+    """Compute sample size, power, or MDE for t-test, ANOVA, or chi-square.
+
+    Exactly one of `power` or `n_per_group` must be None — that is the solved
+    quantity.  Both None → solve for n at power=0.80.
+
+    test_type:
+        "welch_t"    — two-independent-samples t-test, effect_size = Cohen's d
+        "welch_anova"/ "anova" — one-way ANOVA, effect_size = Cohen's f
+        "chi_square" — goodness-of-fit / contingency, effect_size = Cohen's w
+
+    Uses statsmodels power classes, matching G*Power defaults (two-tailed,
+    equal group sizes, non-central distributions).
+    """
+    if power is None and n_per_group is None:
+        power = 0.80
+
+    solve_for: str
+    solved_n: int
+    solved_power: float
+
+    if test_type in ("welch_t", "ttest"):
+        analysis = TTestIndPower()
+        label = "cohens_d"
+        if n_per_group is None:
+            solve_for = "n"
+            raw_n = analysis.solve_power(
+                effect_size=effect_size, alpha=alpha, power=power, ratio=1.0
+            )
+            solved_n = math.ceil(raw_n)
+            solved_power = float(analysis.power(
+                effect_size=effect_size, nobs1=solved_n, alpha=alpha, ratio=1.0
+            ))
+        else:
+            solve_for = "power"
+            solved_n = n_per_group
+            solved_power = float(analysis.power(
+                effect_size=effect_size, nobs1=n_per_group, alpha=alpha, ratio=1.0
+            ))
+
+    elif test_type in ("welch_anova", "anova"):
+        analysis_a = FTestAnovaPower()
+        label = "cohens_f"
+        k = n_groups
+        if n_per_group is None:
+            solve_for = "n"
+            raw_n_total = analysis_a.solve_power(
+                effect_size=effect_size, alpha=alpha, power=power, k_groups=k
+            )
+            # nobs is total N; convert to per-group (ceil for ≥80% power guarantee)
+            solved_n = math.ceil(raw_n_total / k)
+            solved_power = float(analysis_a.power(
+                effect_size=effect_size, nobs=solved_n * k, alpha=alpha, k_groups=k
+            ))
+        else:
+            solve_for = "power"
+            solved_n = n_per_group
+            solved_power = float(analysis_a.power(
+                effect_size=effect_size, nobs=n_per_group * k, alpha=alpha, k_groups=k
+            ))
+
+    elif test_type == "chi_square":
+        analysis_c = GofChisquarePower()
+        label = "cohens_w"
+        df_chi = n_groups - 1  # degrees of freedom = categories - 1
+        if n_per_group is None:
+            solve_for = "n"
+            raw_n = analysis_c.solve_power(
+                effect_size=effect_size, alpha=alpha, power=power, n_bins=n_groups
+            )
+            solved_n = math.ceil(raw_n)
+            solved_power = float(analysis_c.power(
+                effect_size=effect_size, nobs=solved_n, alpha=alpha, n_bins=n_groups
+            ))
+        else:
+            solve_for = "power"
+            solved_n = n_per_group
+            solved_power = float(analysis_c.power(
+                effect_size=effect_size, nobs=n_per_group, alpha=alpha, n_bins=n_groups
+            ))
+
+    else:
+        raise ValueError(f"Unsupported test_type for power analysis: {test_type!r}")
+
+    _small = {"cohens_d": 0.2, "cohens_f": 0.1, "cohens_w": 0.1}[label]
+    _medium = {"cohens_d": 0.5, "cohens_f": 0.25, "cohens_w": 0.3}[label]
+    _large = {"cohens_d": 0.8, "cohens_f": 0.4, "cohens_w": 0.5}[label]
+    notes = (
+        f"Two-tailed α={alpha}, equal group sizes. "
+        f"Effect thresholds (Cohen 1988): small={_small}, medium={_medium}, large={_large}."
+    )
+
+    return PowerAnalysisResult(
+        test_type=test_type,
+        solve_for=solve_for,
+        effect_size=float(effect_size),
+        alpha=float(alpha),
+        power=round(solved_power, 4),
+        n_per_group=solved_n,
+        n_groups=n_groups,
+        effect_size_label=label,
+        notes=notes,
+    )
+
 
 def _describe_group(name: str, arr: np.ndarray) -> dict:
     n = len(arr)

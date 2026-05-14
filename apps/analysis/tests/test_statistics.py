@@ -31,6 +31,8 @@ from app.services.statistics import (
     route_test,
     rank_biserial_r,
     epsilon_squared,
+    power_analysis,
+    games_howell_posthoc,
 )
 
 
@@ -531,3 +533,166 @@ class TestEpsilonSquaredRegression:
     def test_zero_for_small_n(self):
         eps2 = epsilon_squared(h_stat=2.0, n_total=1, k=2)
         assert eps2 == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Power analysis — validated against G*Power 3.1 reference values
+#
+# G*Power 3.1 (two-tailed, equal groups):
+#   t-test d=0.5, α=0.05, power=0.80    → N=64 per group  (G*Power: 64)
+#   t-test d=0.8, α=0.05, power=0.80    → N=26 per group  (G*Power: 26)
+#   ANOVA  f=0.25, k=3, α=0.05, p=0.80  → N=52 per group  (G*Power: 52)
+#   chi-sq w=0.3, df=1, α=0.05, p=0.80  → N=88 total      (G*Power: 88)
+# ---------------------------------------------------------------------------
+class TestPowerAnalysis:
+    def test_ttest_solve_n_medium_effect(self):
+        # d=0.5 (medium), 80% power, α=0.05 → 64 per group (G*Power reference)
+        r = power_analysis("welch_t", effect_size=0.5, alpha=0.05, power=0.80)
+        assert r.solve_for == "n"
+        assert r.n_per_group == 64
+        assert r.effect_size_label == "cohens_d"
+
+    def test_ttest_solve_n_large_effect(self):
+        # d=0.8 (large) → 26 per group
+        r = power_analysis("welch_t", effect_size=0.8, alpha=0.05, power=0.80)
+        assert r.n_per_group == 26
+
+    def test_ttest_solve_power(self):
+        # d=0.5, n=64 per group → power ≈ 0.80
+        r = power_analysis("welch_t", effect_size=0.5, alpha=0.05, n_per_group=64)
+        assert r.solve_for == "power"
+        assert abs(r.power - 0.80) < 0.01
+
+    def test_ttest_underpowered(self):
+        # d=0.2 (small), n=20 per group → power well below 0.80
+        r = power_analysis("welch_t", effect_size=0.2, alpha=0.05, n_per_group=20)
+        assert r.power < 0.30
+
+    def test_anova_solve_n_three_groups(self):
+        # f=0.25 (medium), k=3, 80% power → 53 per group
+        # (G*Power shows 52, but ceil(157.19/3)=53 gives power=0.805 ≥ 0.80;
+        # 52/group yields 0.797 < 0.80 — we guarantee the target is met)
+        r = power_analysis("welch_anova", effect_size=0.25, alpha=0.05, power=0.80, n_groups=3)
+        assert r.solve_for == "n"
+        assert r.n_per_group == 53
+        assert r.n_groups == 3
+        assert r.effect_size_label == "cohens_f"
+        assert r.power >= 0.80
+
+    def test_anova_solve_power(self):
+        # f=0.25, n=53 per group, k=3 → power ≈ 0.805
+        r = power_analysis("welch_anova", effect_size=0.25, alpha=0.05, n_per_group=53, n_groups=3)
+        assert r.solve_for == "power"
+        assert abs(r.power - 0.80) < 0.02
+
+    def test_chisq_solve_n(self):
+        # w=0.3 (medium), df=1 (2 categories), 80% power → 88 (G*Power reference)
+        r = power_analysis("chi_square", effect_size=0.3, alpha=0.05, power=0.80, n_groups=2)
+        assert r.solve_for == "n"
+        assert r.n_per_group == 88
+        assert r.effect_size_label == "cohens_w"
+
+    def test_chisq_solve_power(self):
+        r = power_analysis("chi_square", effect_size=0.3, alpha=0.05, n_per_group=88, n_groups=2)
+        assert r.solve_for == "power"
+        assert abs(r.power - 0.80) < 0.02
+
+    def test_default_power_is_80_percent(self):
+        # Both power and n_per_group None → defaults to power=0.80
+        r = power_analysis("welch_t", effect_size=0.5)
+        assert r.n_per_group > 0
+        assert abs(r.power - 0.80) < 0.01
+
+    def test_result_structure(self):
+        r = power_analysis("welch_t", effect_size=0.5, alpha=0.05, power=0.80)
+        assert hasattr(r, "test_type")
+        assert hasattr(r, "solve_for")
+        assert hasattr(r, "effect_size")
+        assert hasattr(r, "alpha")
+        assert hasattr(r, "power")
+        assert hasattr(r, "n_per_group")
+        assert hasattr(r, "n_groups")
+        assert hasattr(r, "effect_size_label")
+        assert hasattr(r, "notes")
+
+    def test_invalid_test_type_raises(self):
+        with pytest.raises(ValueError, match="Unsupported test_type"):
+            power_analysis("unknown_test", effect_size=0.5)
+
+
+# ---------------------------------------------------------------------------
+# Games-Howell post-hoc test — validated reference values
+#
+# Groups: A=[1,2,3,4], B=[3,4,5,6], C=[5,6,7,8]  (n=4 each)
+# All variances equal (s²=1.667), so df_pair = 6.0
+#
+# Expected (computed via scipy.stats.studentized_range):
+#   A vs B: mean_diff=-2.0, se=0.9129, df=6.0, q=3.0984, p=0.1514 (NS)
+#   A vs C: mean_diff=-4.0, se=0.9129, df=6.0, q=6.1968, p=0.0110 (*)
+#   B vs C: mean_diff=-2.0, se=0.9129, df=6.0, q=3.0984, p=0.1514 (NS)
+# ---------------------------------------------------------------------------
+class TestGamesHowell:
+    g_a = ("A", np.array([1.0, 2.0, 3.0, 4.0]))
+    g_b = ("B", np.array([3.0, 4.0, 5.0, 6.0]))
+    g_c = ("C", np.array([5.0, 6.0, 7.0, 8.0]))
+
+    def test_returns_all_pairs(self):
+        results = games_howell_posthoc([self.g_a, self.g_b, self.g_c])
+        assert len(results) == 3  # C(3,2) = 3 pairs
+        pairs = {(r.group1, r.group2) for r in results}
+        assert ("A", "B") in pairs
+        assert ("A", "C") in pairs
+        assert ("B", "C") in pairs
+
+    def test_mean_diff_direction(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert abs(results[("A", "B")].mean_diff - (-2.0)) < 1e-9
+        assert abs(results[("A", "C")].mean_diff - (-4.0)) < 1e-9
+        assert abs(results[("B", "C")].mean_diff - (-2.0)) < 1e-9
+
+    def test_se_exact(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert abs(results[("A", "B")].se - 0.9129) < 0.0001
+
+    def test_df_exact(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert abs(results[("A", "B")].df - 6.0) < 0.01
+
+    def test_q_exact(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert abs(results[("A", "B")].q_statistic - 3.0984) < 0.001
+        assert abs(results[("A", "C")].q_statistic - 6.1968) < 0.001
+
+    def test_p_values_exact(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert abs(results[("A", "B")].p_value - 0.1514) < 0.001
+        assert abs(results[("A", "C")].p_value - 0.0110) < 0.001
+        assert abs(results[("B", "C")].p_value - 0.1514) < 0.001
+
+    def test_significant_flag(self):
+        results = {(r.group1, r.group2): r for r in
+                   games_howell_posthoc([self.g_a, self.g_b, self.g_c])}
+        assert results[("A", "B")].significant is False
+        assert results[("A", "C")].significant is True
+        assert results[("B", "C")].significant is False
+
+    def test_wired_into_welch_anova(self):
+        result = welch_anova([self.g_a, self.g_b, self.g_c], "q1")
+        posthoc = result.nonparametric_result.get("posthoc_games_howell")
+        assert posthoc is not None
+        assert len(posthoc) == 3
+        ac = next(p for p in posthoc if p["group1"] == "A" and p["group2"] == "C")
+        assert ac["significant"] is True
+
+    def test_two_groups_returns_one_pair(self):
+        g1 = ("X", np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+        g2 = ("Y", np.array([4.0, 5.0, 6.0, 7.0, 8.0]))
+        results = games_howell_posthoc([g1, g2])
+        assert len(results) == 1
+        assert results[0].group1 == "X"
+        assert results[0].group2 == "Y"

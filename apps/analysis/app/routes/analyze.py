@@ -16,8 +16,10 @@ from pydantic import BaseModel
 
 from ..services.statistics import (
     AnalysisOutput,
+    PowerAnalysisResult,
     apply_multiple_comparison_corrections,
     check_replication_goals,
+    power_analysis,
     route_test,
 )
 
@@ -35,6 +37,27 @@ class AnalyzeResponse(BaseModel):
     status: str
 
 
+class PowerRequest(BaseModel):
+    test_type: str = "welch_t"
+    effect_size: float
+    alpha: float = 0.05
+    power: Optional[float] = None
+    n_per_group: Optional[int] = None
+    n_groups: int = 2
+
+
+class PowerResponse(BaseModel):
+    test_type: str
+    solve_for: str
+    effect_size: float
+    alpha: float
+    power: float
+    n_per_group: int
+    n_groups: int
+    effect_size_label: str
+    notes: str
+
+
 async def get_db() -> asyncpg.Connection:
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
@@ -42,6 +65,32 @@ async def get_db() -> asyncpg.Connection:
     # asyncpg uses postgresql:// scheme
     dsn = dsn.replace("postgres://", "postgresql://")
     return await asyncpg.connect(dsn)
+
+
+@router.post("/power-analysis", response_model=PowerResponse)
+async def compute_power(body: PowerRequest) -> PowerResponse:
+    try:
+        result: PowerAnalysisResult = power_analysis(
+            test_type=body.test_type,
+            effect_size=body.effect_size,
+            alpha=body.alpha,
+            power=body.power,
+            n_per_group=body.n_per_group,
+            n_groups=body.n_groups,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return PowerResponse(
+        test_type=result.test_type,
+        solve_for=result.solve_for,
+        effect_size=result.effect_size,
+        alpha=result.alpha,
+        power=result.power,
+        n_per_group=result.n_per_group,
+        n_groups=result.n_groups,
+        effect_size_label=result.effect_size_label,
+        notes=result.notes,
+    )
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
