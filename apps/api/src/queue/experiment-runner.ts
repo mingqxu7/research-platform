@@ -162,8 +162,10 @@ export async function checkRunCompletion(runId: string): Promise<void> {
   const run = await db("runs").where({ id: runId }).first();
   if (!run) return;
 
-  const allDone =
-    run.completed_personas + run.failed_personas >= run.total_personas;
+  // completed_personas is incremented for every job regardless of parse_status,
+  // so it already includes failures — do not add failed_personas (that would
+  // double-count and trigger analysis after the very first parse failure).
+  const allDone = run.completed_personas >= run.total_personas;
 
   if (allDone) {
     // Conditional update: only the worker that wins this CAS-like update triggers analysis.
