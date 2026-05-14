@@ -461,16 +461,18 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
       age_sd: 13,
       gender_distribution: { male: 0.48, female: 0.52 },
       income_distribution: {
-        under_30k: 0.2,
-        "30k_60k": 0.35,
-        "60k_100k": 0.3,
-        over_100k: 0.15,
+        low: 0.2,
+        lower_middle: 0.2,
+        middle: 0.3,
+        upper_middle: 0.2,
+        high: 0.1,
       },
       education_distribution: {
         high_school: 0.2,
         some_college: 0.3,
         bachelors: 0.35,
-        graduate: 0.15,
+        masters: 0.12,
+        doctorate: 0.03,
       },
       occupation_pool: [
         "teacher", "nurse", "software developer", "accountant", "sales representative",
