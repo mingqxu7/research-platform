@@ -204,7 +204,8 @@ def epsilon_squared(h_stat: float, n_total: int, k: int = 2) -> float:
 # ---------------------------------------------------------------------------
 
 def welch_ttest(
-    group1: np.ndarray, group2: np.ndarray, question_id: str
+    group1: np.ndarray, group2: np.ndarray, question_id: str,
+    name1: str = "group1", name2: str = "group2",
 ) -> AnalysisOutput:
     """Welch's t-test (equal_var=False) + Levene's diagnostic."""
     t_stat, p_val = stats.ttest_ind(group1, group2, equal_var=False)
@@ -216,8 +217,8 @@ def welch_ttest(
     u_stat, u_p = mannwhitneyu(group1, group2, alternative="two-sided")
     r = rank_biserial_r(u_stat, len(group1), len(group2))
 
-    g1_stats = _describe_group("group1", group1)
-    g2_stats = _describe_group("group2", group2)
+    g1_stats = _describe_group(name1, group1)
+    g2_stats = _describe_group(name2, group2)
 
     # df for Welch's
     s1, s2 = np.var(group1, ddof=1), np.var(group2, ddof=1)
@@ -235,7 +236,7 @@ def welch_ttest(
         effect_size_type="cohens_d",
         effect_ci_lower=d_ci[0],
         effect_ci_upper=d_ci[1],
-        condition_stats={"group1": g1_stats, "group2": g2_stats},
+        condition_stats={name1: g1_stats, name2: g2_stats},
         levene_stat=float(lev_stat),
         levene_p=float(lev_p),
         nonparametric_result={
@@ -744,7 +745,7 @@ def route_test(
     if num_conditions == 2:
         g1_name, g1 = numeric_groups[0]
         g2_name, g2 = numeric_groups[1]
-        return welch_ttest(g1, g2, question_id)
+        return welch_ttest(g1, g2, question_id, name1=g1_name, name2=g2_name)
     else:
         return welch_anova(numeric_groups, question_id)
 
