@@ -54,8 +54,12 @@ export function rankTemperaturesByVarianceMatch(
     return { ...r, divergence_from_human_sd: divergenceScore };
   });
 
+  // Null divergences (no human reference) sort to the end so they are never
+  // mistakenly selected as the best temperature.
   ranked.sort((a, b) => {
-    if (a.divergence_from_human_sd === null || b.divergence_from_human_sd === null) return 0;
+    if (a.divergence_from_human_sd === null && b.divergence_from_human_sd === null) return 0;
+    if (a.divergence_from_human_sd === null) return 1;
+    if (b.divergence_from_human_sd === null) return -1;
     return a.divergence_from_human_sd - b.divergence_from_human_sd;
   });
 

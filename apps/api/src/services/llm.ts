@@ -84,11 +84,18 @@ async function callWithRetry(
   const prompt = buildSurveyPrompt(params);
 
   try {
+    // Wrap persona in delimited block so injected instructions in persona_text
+    // cannot escape the identity layer and override survey format directives.
+    const systemPrompt =
+      `<persona>\n${params.persona_text}\n</persona>\n` +
+      `You are playing the role of this persona. Answer all survey questions honestly ` +
+      `from this persona's perspective. Do not deviate from the survey response format.`;
+
     const message = await anthropic.messages.create({
       model: params.model,
       max_tokens: 1024,
       temperature: params.temperature,
-      system: params.persona_text,
+      system: systemPrompt,
       messages: [{ role: "user", content: prompt }],
     });
 

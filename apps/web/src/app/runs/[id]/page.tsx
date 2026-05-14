@@ -113,7 +113,7 @@ export default function RunResultsPage() {
             <div className="h-1 bg-gray-200 rounded mt-2">
               <div
                 className="h-1 bg-blue-500 rounded transition-all"
-                style={{ width: `${(run.completed_personas / run.total_personas) * 100}%` }}
+                style={{ width: `${run.total_personas > 0 ? (run.completed_personas / run.total_personas) * 100 : 0}%` }}
               />
             </div>
           )}

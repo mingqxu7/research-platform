@@ -28,8 +28,9 @@ function sampleFromDistribution(distribution: Record<string, number>): string {
 }
 
 function sampleAge(mean: number, sd: number): number {
-  // Box-Muller transform for normal distribution
-  const u1 = Math.random();
+  // Box-Muller transform — u1 must be > 0 to avoid log(0) = -Infinity → NaN age
+  let u1 = Math.random();
+  while (u1 === 0) u1 = Math.random();
   const u2 = Math.random();
   const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
   const age = Math.round(mean + sd * z);

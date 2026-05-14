@@ -31,6 +31,8 @@ export function buildPowerDispatch(params: {
   num_dvs: number;
 }): PowerDispatch {
   const { effect_size, effect_metric, alpha, num_conditions, num_dvs } = params;
+  if (num_dvs <= 0) throw new Error("num_dvs must be >= 1");
+  if (effect_size <= 0) throw new Error("effect_size must be > 0");
   const corrected_alpha = alpha / num_dvs;
 
   if (num_conditions === 2) {
