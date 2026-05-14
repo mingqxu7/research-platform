@@ -867,4 +867,142 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
       // Q4 (appeal, order_index 3) and Q5 (attitude, order_index 4): no direct published benchmarks — Goal 2 returns null
     ],
   },
+  {
+    id: "endowed-progress-nunes-dreze-2006",
+    title: "Endowed Progress Effect and Loyalty Program Motivation",
+    description:
+      "Replicates Nunes & Drèze (2006)'s endowed progress effect: consumers show higher motivation to complete a goal when they perceive they have already made progress, even when that progress is artificially granted. Participants see a loyalty card framed as either a fresh start (0/8 stamps) or an endowed-progress card (2/10 stamps already earned), with the same 8 stamps still needed in both conditions.",
+    source_citation:
+      "Nunes, J. C., & Drèze, X. (2006). The endowed progress effect: How artificial advancement increases effort. Journal of Consumer Research, 32(4), 504–512.",
+    research_area: "Consumer Behavior / Motivation",
+    design_summary:
+      "2-condition between-subjects design. IV: loyalty card framing (fresh-start 0/8 vs. endowed-progress 2/10). Objective stamps still needed = 8 in both conditions. DVs: motivation to collect stamps, program value, return visit intent, program appeal, perceived progress (manipulation check).",
+    sample_size: 200,
+    demographic_spec: {
+      age_mean: 35,
+      age_sd: 12,
+      gender_distribution: { male: 0.47, female: 0.53 },
+      income_distribution: {
+        low: 0.15,
+        lower_middle: 0.25,
+        middle: 0.35,
+        upper_middle: 0.18,
+        high: 0.07,
+      },
+      education_distribution: {
+        high_school: 0.18,
+        some_college: 0.27,
+        bachelors: 0.38,
+        masters: 0.13,
+        doctorate: 0.04,
+      },
+      occupation_pool: [
+        "teacher", "nurse", "software developer", "administrative assistant", "retail worker",
+        "graphic designer", "student", "accountant", "marketing coordinator", "social worker",
+        "freelancer", "barista", "project manager", "sales representative", "customer service representative",
+      ],
+    },
+    study_context:
+      "Imagine you have just signed up for a loyalty program at a local coffee shop. Below is your loyalty card. Please read the description carefully, then answer the questions that follow based on your honest reactions.",
+    conditions: [
+      {
+        name: "Fresh-Start Card",
+        description: "Standard 8-stamp loyalty card with 0 stamps earned — participant starts from zero.",
+        order_index: 0,
+        stimulus_type: "text",
+        stimulus_text:
+          "YOUR LOYALTY CARD:\n\n[ _ ][ _ ][ _ ][ _ ][ _ ][ _ ][ _ ][ _ ]\n\nCollect 8 stamps to earn a FREE coffee.\nYou currently have 0 of 8 stamps.\n\nEach time you purchase a coffee, you earn 1 stamp. Reach 8 stamps and your next coffee is on us!",
+      },
+      {
+        name: "Endowed-Progress Card",
+        description: "10-stamp loyalty card with 2 stamps pre-earned — same 8 stamps still needed, but framed as already having made progress.",
+        order_index: 1,
+        stimulus_type: "text",
+        stimulus_text:
+          "YOUR LOYALTY CARD:\n\n[★][★][ _ ][ _ ][ _ ][ _ ][ _ ][ _ ][ _ ][ _ ]\n\nCollect 10 stamps to earn a FREE coffee.\nYou already have 2 of 10 stamps — you're on your way!\n\nEach time you purchase a coffee, you earn 1 stamp. Reach 10 stamps and your next coffee is on us!",
+      },
+    ],
+    questions: [
+      {
+        text: "How motivated are you to collect the remaining stamps and earn the free coffee?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Not at all motivated",
+          "4": "Somewhat motivated",
+          "7": "Extremely motivated",
+        },
+        order_index: 0,
+      },
+      {
+        text: "How valuable does this loyalty program seem to you?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Not at all valuable",
+          "4": "Somewhat valuable",
+          "7": "Very valuable",
+        },
+        order_index: 1,
+      },
+      {
+        text: "How likely would you be to return to this coffee shop specifically to collect stamps?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Very unlikely",
+          "4": "Neither likely nor unlikely",
+          "7": "Very likely",
+        },
+        order_index: 2,
+      },
+      {
+        text: "How appealing is this loyalty program overall?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Not at all appealing",
+          "4": "Somewhat appealing",
+          "7": "Very appealing",
+        },
+        order_index: 3,
+      },
+      {
+        text: "How much progress have you already made toward earning the free coffee?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "No progress at all",
+          "4": "Some progress",
+          "7": "A lot of progress",
+        },
+        order_index: 4,
+      },
+    ],
+    expected_findings:
+      "Endowed-progress condition (2/10 stamps) expected to produce significantly higher motivation, program value, return visit intent, and appeal than the fresh-start condition (0/8 stamps), despite requiring the same 8 additional stamps in both cases. Effect sizes in the original study (behavioral measure) were large; survey adaptations typically find d ≈ 0.35–0.65 for motivation and intent measures. Perceived progress (Q4, manipulation check) should be significantly higher in the endowed-progress condition (p < .05), confirming the framing was perceived as intended.",
+    question_benchmarks: [
+      {
+        question_order_index: 0,
+        finding_label: "motivation_to_collect",
+        effect_size: 0.50,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.35,
+        ci_upper: 0.65,
+        source_citation:
+          "Nunes & Drèze (2006) original: completion rate 34% vs 19% (behavioral); survey adaptations yield d ≈ 0.35–0.65 for motivation/intent measures (Koo & Fishbach 2010; goal-gradient meta-analysis Cheema & Bagchi 2011).",
+      },
+      // Q1 (program value), Q2 (return visit intent), Q3 (program appeal): no published d benchmarks — Goal 2 returns null
+      {
+        question_order_index: 4,
+        finding_label: "perceived_progress_manipulation_check",
+        effect_size: 0.90,
+        effect_size_type: "cohens_d",
+        ci_lower: 0.60,
+        ci_upper: 1.20,
+        source_citation:
+          "Nunes & Drèze (2006) manipulation check: endowed-progress participants report substantially higher perceived progress than fresh-start (d ≈ 0.7–1.2 across replications; confirmed in Koo & Fishbach 2010 Study 2).",
+      },
+    ],
+  },
 ];

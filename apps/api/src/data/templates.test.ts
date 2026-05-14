@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { STUDY_TEMPLATES } from "./templates";
 
 describe("STUDY_TEMPLATES data integrity", () => {
-  it("contains exactly 6 templates", () => {
-    expect(STUDY_TEMPLATES).toHaveLength(6);
+  it("contains exactly 7 templates", () => {
+    expect(STUDY_TEMPLATES).toHaveLength(7);
   });
 
   it("all template ids are unique", () => {
