@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: research-platform-api
+    runtime: docker
+    dockerfilePath: apps/api/Dockerfile
+    dockerContext: apps/api
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: research-platform-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: research-platform-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: research-platform-redis
+          property: port
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANALYSIS_SERVICE_URL
+        fromService:
+          type: web
+          name: research-platform-analysis
+          property: host
+          envVarKey: ANALYSIS_SERVICE_URL
+
+  - type: web
+    name: research-platform-analysis
+    runtime: docker
+    dockerfilePath: apps/analysis/Dockerfile
+    dockerContext: apps/analysis
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: research-platform-db
+          property: connectionString
+
+databases:
+  - name: research-platform-db
+    plan: free
+    databaseName: research_platform
+    user: rp_user
