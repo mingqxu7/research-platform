@@ -64,12 +64,13 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
               (analyzed.filter((r) => r.replicated_goal1).length / analyzed.length) * 100,
             )
           : null;
+      // goal2 is computed independently — some test types (e.g. chi-square) have no
+      // effect CI and will have replicated_goal2=null while replicated_goal1 is set.
+      const goal2Eligible = results.filter((r) => r.replicated_goal2 !== null);
       const goal2Rate =
-        analyzed.filter((r) => r.replicated_goal2 !== null).length > 0
+        goal2Eligible.length > 0
           ? Math.round(
-              (analyzed.filter((r) => r.replicated_goal2).length /
-                analyzed.filter((r) => r.replicated_goal2 !== null).length) *
-                100,
+              (goal2Eligible.filter((r) => r.replicated_goal2).length / goal2Eligible.length) * 100,
             )
           : null;
 
@@ -129,7 +130,7 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
         const d = typeof r.demographics === "string" ? JSON.parse(r.demographics) : (r.demographics ?? {});
         return [
           r.persona_index,
-          `"${r.condition_name}"`,
+          `"${String(r.condition_name ?? "").replace(/"/g, '""')}"`,
           d.age ?? "",
           d.gender ?? "",
           d.income ?? "",
@@ -137,7 +138,7 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
           `"${(d.occupation ?? "").replace(/"/g, '""')}"`,
           `"${r.question_text.replace(/"/g, '""')}"`,
           r.scale_type,
-          r.parsed_value ?? `"${r.raw_value}"`,
+          r.parsed_value ?? `"${String(r.raw_value ?? "").replace(/"/g, '""')}"`,
           r.parse_status,
         ].join(",");
       });
@@ -175,12 +176,11 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
         analyzed.length > 0
           ? Math.round((analyzed.filter((r) => r.replicated_goal1).length / analyzed.length) * 100)
           : null;
+      const goal2Eligible = results.filter((r) => r.replicated_goal2 !== null);
       const goal2Rate =
-        analyzed.filter((r) => r.replicated_goal2 !== null).length > 0
+        goal2Eligible.length > 0
           ? Math.round(
-              (analyzed.filter((r) => r.replicated_goal2).length /
-                analyzed.filter((r) => r.replicated_goal2 !== null).length) *
-                100,
+              (goal2Eligible.filter((r) => r.replicated_goal2).length / goal2Eligible.length) * 100,
             )
           : null;
 

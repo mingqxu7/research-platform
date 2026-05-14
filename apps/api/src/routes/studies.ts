@@ -254,7 +254,7 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
       const study = await db("studies").where({ id: req.params.id }).first();
       if (!study) return reply.code(404).send({ error: "Study not found" });
 
-      if (!study.temperature) {
+      if (study.temperature === null || study.temperature === undefined) {
         return reply.code(422).send({
           error:
             "Temperature not calibrated. Run calibration before launching a study.",

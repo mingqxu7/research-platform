@@ -86,6 +86,10 @@ export function startWorker(): Worker {
             answer?.value !== null && answer?.value !== undefined
               ? Number(answer.value)
               : null;
+          // If the LLM returned a valid response but omitted this question's answer,
+          // mark it missing_answer so it is excluded from analysis without inflating
+          // the run-level parse failure counter.
+          const rowParseStatus = !answer ? "missing_answer" : result.parse_status;
 
           return {
             run_id,
@@ -93,7 +97,7 @@ export function startWorker(): Worker {
             question_id: q.id,
             raw_value: rawValue,
             parsed_value: Number.isNaN(parsedValue ?? NaN) ? null : parsedValue,
-            parse_status: result.parse_status,
+            parse_status: rowParseStatus,
             retry_count: 0,
             raw_llm_response: result.raw_response,
           };

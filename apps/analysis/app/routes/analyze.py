@@ -110,6 +110,10 @@ async def _run_analysis(
     if not run:
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
 
+    # Idempotency guard: skip re-analysis if already complete
+    if run["status"] == "complete":
+        return AnalyzeResponse(run_id=run_id, questions_analyzed=0, status="already_complete")
+
     study_id = run["study_id"]
 
     # Fetch questions (non-open-ended only)
@@ -221,7 +225,26 @@ async def _run_analysis(
                 $11, $12, $13::jsonb, $14, $15, $16::jsonb,
                 $17, $18, $19, $20, $21
             )
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (run_id, question_id) DO UPDATE SET
+                test_type = EXCLUDED.test_type,
+                test_statistic = EXCLUDED.test_statistic,
+                p_value_raw = EXCLUDED.p_value_raw,
+                p_value_bonferroni = EXCLUDED.p_value_bonferroni,
+                p_value_bh_fdr = EXCLUDED.p_value_bh_fdr,
+                correction_method_default = EXCLUDED.correction_method_default,
+                effect_size = EXCLUDED.effect_size,
+                effect_size_type = EXCLUDED.effect_size_type,
+                effect_ci_lower = EXCLUDED.effect_ci_lower,
+                effect_ci_upper = EXCLUDED.effect_ci_upper,
+                condition_stats = EXCLUDED.condition_stats,
+                levene_stat = EXCLUDED.levene_stat,
+                levene_p = EXCLUDED.levene_p,
+                nonparametric_result = EXCLUDED.nonparametric_result,
+                replicated_goal1 = EXCLUDED.replicated_goal1,
+                replicated_goal2 = EXCLUDED.replicated_goal2,
+                human_benchmark_effect_size = EXCLUDED.human_benchmark_effect_size,
+                human_benchmark_ci_lower = EXCLUDED.human_benchmark_ci_lower,
+                human_benchmark_ci_upper = EXCLUDED.human_benchmark_ci_upper
             """,
             run_id,
             output.question_id,
