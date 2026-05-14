@@ -16,6 +16,7 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
       condition_count: t.conditions.length,
       question_count: t.questions.length,
       expected_findings: t.expected_findings,
+      has_benchmarks: (t.question_benchmarks?.length ?? 0) > 0,
     }));
   });
 
