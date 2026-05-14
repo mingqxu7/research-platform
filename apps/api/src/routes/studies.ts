@@ -267,6 +267,7 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
 
       // Generate personas with balanced condition assignment
       const personaRows: Array<{
+        run_id: string;
         study_id: string;
         condition_id: string;
         persona_text: string;
@@ -280,6 +281,7 @@ export async function studyRoutes(app: FastifyInstance): Promise<void> {
         const personaText = buildPersonaText(demographics);
 
         personaRows.push({
+          run_id: run.id,
           study_id: study.id,
           condition_id: condition.id,
           persona_text: personaText,

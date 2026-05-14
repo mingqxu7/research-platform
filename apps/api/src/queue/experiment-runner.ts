@@ -133,7 +133,7 @@ export async function enqueueRun(runId: string): Promise<void> {
   const study = await db("studies").where({ id: run.study_id }).first();
   if (!study) throw new Error(`Study ${run.study_id} not found`);
 
-  const personas = await db("personas").where({ study_id: run.study_id });
+  const personas = await db("personas").where({ run_id: runId });
 
   // Update run to running
   await db("runs")
