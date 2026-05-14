@@ -30,8 +30,7 @@ services:
         fromService:
           type: web
           name: research-platform-analysis
-          property: host
-          envVarKey: ANALYSIS_SERVICE_URL
+          property: url
 
   - type: web
     name: research-platform-analysis
@@ -50,3 +49,8 @@ databases:
     plan: free
     databaseName: research_platform
     user: rp_user
+
+redis:
+  - name: research-platform-redis
+    plan: free
+    ipAllowList: []
