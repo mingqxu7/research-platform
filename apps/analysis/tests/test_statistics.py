@@ -248,7 +248,8 @@ class TestRouting:
         assert result.test_type == "welch_t"
 
     def test_continuous_3groups_routes_to_anova(self):
-        groups = [("A", [1.0, 2.0]), ("B", [3.0, 4.0]), ("C", [5.0, 6.0])]
+        # n=3 per group avoids Levene's test numerical edge case with n=2
+        groups = [("A", [1.0, 2.0, 3.0]), ("B", [3.0, 4.0, 5.0]), ("C", [5.0, 6.0, 7.0])]
         result = route_test("continuous", None, 3, groups, "q1")
         assert result.test_type == "welch_anova"
 
