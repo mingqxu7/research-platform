@@ -445,4 +445,117 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     expected_findings:
       "Social proof cues expected to significantly increase purchase confidence, expected satisfaction, and purchase intent. Price premium willingness expected to be higher in the social proof condition.",
   },
+  {
+    id: "arousal-virality-berger-milkman-2012",
+    title: "Emotional Arousal and Content Sharing Intent",
+    description:
+      "Replicates Berger & Milkman (2012)'s key finding that high-arousal emotions (awe, anxiety, anger) drive content sharing more than low-arousal emotions (sadness, contentment). Participants read one of two news articles and rate their sharing intent and emotional response.",
+    source_citation:
+      "Berger, J., & Milkman, K. L. (2012). What Makes Online Content Viral? Journal of Marketing Research, 49(2), 192–205.",
+    research_area: "Media Effects / Communication",
+    design_summary:
+      "2-condition between-subjects design. IV: article emotional tone (high-arousal awe vs. low-arousal sadness). DVs: sharing intent (2 items), emotional arousal, emotional valence, article interest.",
+    sample_size: 200,
+    demographic_spec: {
+      age_mean: 38,
+      age_sd: 13,
+      gender_distribution: { male: 0.48, female: 0.52 },
+      income_distribution: {
+        under_30k: 0.2,
+        "30k_60k": 0.35,
+        "60k_100k": 0.3,
+        over_100k: 0.15,
+      },
+      education_distribution: {
+        high_school: 0.2,
+        some_college: 0.3,
+        bachelors: 0.35,
+        graduate: 0.15,
+      },
+      occupation_pool: [
+        "teacher", "nurse", "software developer", "accountant", "sales representative",
+        "manager", "administrative assistant", "retail worker", "freelancer", "student",
+        "engineer", "social worker", "journalist", "chef", "project manager",
+      ],
+    },
+    study_context:
+      "You will read a brief news article. Please read it carefully and then answer the questions below. There are no right or wrong answers — we are interested in your honest reactions.",
+    conditions: [
+      {
+        name: "High-Arousal (Awe)",
+        description: "An awe-inspiring science article designed to elicit high-arousal positive emotion.",
+        order_index: 0,
+        stimulus_type: "text",
+        stimulus_text:
+          "ARTICLE: Scientists Discover Microbes Surviving in the Stratosphere — Rewriting Our Understanding of Life\n\nIn a discovery that has left researchers stunned, a team of astrobiologists has confirmed the presence of living microorganisms thriving 40 kilometers above Earth's surface — deep in the stratosphere, where temperatures plunge to -60°C and ultraviolet radiation is hundreds of times more intense than at sea level.\n\nThe organisms, collected via high-altitude balloon sampling, appear to metabolize trace gases and withstand radiation levels that would kill virtually any known life form. 'We've just moved the boundary of where life can exist,' said lead researcher Dr. Sarah Chen of MIT. 'If life survives here, it changes everything we thought we knew about habitability — on Earth and beyond.'\n\nThe findings suggest that life may be far more tenacious and widespread in extreme environments than previously imagined, potentially reshaping the search for life on other planets. Several of the microbes appear to have no known relatives in any existing genetic database — raising the possibility that they represent an entirely separate branch of Earth's tree of life, evolving in near-isolation for millions of years.\n\n'We keep moving the goalposts for what life requires,' said Dr. James Park, an astrobiologist not involved in the study. 'Every time we do, we find something living right at the new boundary.'",
+      },
+      {
+        name: "Low-Arousal (Sadness)",
+        description: "A sad human-interest article designed to elicit low-arousal negative emotion.",
+        order_index: 1,
+        stimulus_type: "text",
+        stimulus_text:
+          "ARTICLE: The Long Goodbye: Families Navigate the Quiet Grief of Memory Loss\n\nFor Margaret Tillson, the hardest part wasn't the diagnosis. It was the gradual disappearance — the way her mother, Eleanor, began forgetting her name. First it was small things: where she left her keys, what she had for breakfast. Then, over eighteen slow months, it became everything.\n\n'She would look at me and I could see her searching,' Margaret, 54, said quietly. 'Like she knew she should know me, but couldn't find it anymore.'\n\nAcross the country, an estimated 6.7 million Americans live with Alzheimer's disease, a condition that erases memory gradually but thoroughly. For the families who care for them, the experience is a particular kind of grief — mourning someone who is still present. Caregivers often describe a profound sense of loneliness: friends don't know what to say, the loss is invisible to outsiders, and there is no clear moment to grieve.\n\nEleanor passed away last spring. Margaret keeps a photo of the two of them from fifteen years ago, taken at a family reunion by the shore. 'She was so sharp then,' she says. 'She remembered every birthday, every story. I try to hold onto who she was.' She pauses. 'It just takes a long time to let go.'",
+      },
+    ],
+    questions: [
+      {
+        text: "How likely are you to share this article with someone you know?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Extremely unlikely",
+          "4": "Neither likely nor unlikely",
+          "7": "Extremely likely",
+        },
+        order_index: 0,
+      },
+      {
+        text: "How likely are you to email or send this article to a friend or family member?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Extremely unlikely",
+          "4": "Neither likely nor unlikely",
+          "7": "Extremely likely",
+        },
+        order_index: 1,
+      },
+      {
+        text: "How activated or energized do you feel after reading this article?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Not at all activated",
+          "4": "Somewhat activated",
+          "7": "Extremely activated",
+        },
+        order_index: 2,
+      },
+      {
+        text: "Overall, how positive or negative did this article make you feel?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Very negative",
+          "4": "Neither positive nor negative",
+          "7": "Very positive",
+        },
+        order_index: 3,
+      },
+      {
+        text: "How interesting did you find this article?",
+        scale_type: "likert",
+        scale_points: 7,
+        scale_labels: {
+          "1": "Not at all interesting",
+          "4": "Somewhat interesting",
+          "7": "Extremely interesting",
+        },
+        order_index: 4,
+      },
+    ],
+    expected_findings:
+      "High-arousal (awe) condition expected to produce significantly higher sharing intent than low-arousal (sadness) condition, replicating Berger & Milkman (2012). Arousal activation ratings expected to be higher in the awe condition; valence expected to be more positive in the awe condition.",
+  },
 ];

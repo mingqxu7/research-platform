@@ -23,6 +23,7 @@ const AREA_COLORS: Record<string, string> = {
   "Health Communication / Behavioral Science": "bg-green-100 text-green-700",
   "Advertising / Brand Management": "bg-purple-100 text-purple-700",
   "Consumer Psychology / E-Commerce": "bg-orange-100 text-orange-700",
+  "Media Effects / Communication": "bg-rose-100 text-rose-700",
 };
 
 export default function TemplatesPage() {
