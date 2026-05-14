@@ -8,6 +8,8 @@ FROM base AS development
 CMD ["npm", "run", "dev"]
 
 FROM base AS build
+ARG NEXT_PUBLIC_API_URL=/api-backend
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 FROM node:20-alpine AS production
