@@ -106,6 +106,16 @@ class TestWelchTTest:
         assert result.condition_stats["Treatment"]["n"] == 7
         assert result.condition_stats["Control"]["n"] == 7
 
+    def test_raises_when_group_has_fewer_than_two_observations(self):
+        # n<2 per group is undefined for Welch's t-test (can't compute variance).
+        # The guard was added after observing silent NaN propagation for n=1 groups.
+        with pytest.raises(ValueError, match="n>=2"):
+            welch_ttest(np.array([1.0]), np.array([2.0, 3.0, 4.0]), "q1")
+
+    def test_raises_when_second_group_has_fewer_than_two_observations(self):
+        with pytest.raises(ValueError, match="n>=2"):
+            welch_ttest(np.array([1.0, 2.0, 3.0]), np.array([5.0]), "q1")
+
 
 class TestWelchAnova:
     g1 = ("A", np.array([1, 2, 1, 2, 1], dtype=float))
@@ -573,6 +583,12 @@ class TestEpsilonSquaredRegression:
     def test_zero_for_small_n(self):
         eps2 = epsilon_squared(h_stat=2.0, n_total=1, k=2)
         assert eps2 == 0.0
+
+    def test_negative_formula_result_clamped_to_zero(self):
+        # H=0.5, k=3, N=20 → (0.5 - 2) / 19 = -0.079 — must clamp to 0.0, not go negative.
+        # Negative epsilon² is nonsensical (effect size cannot be < 0).
+        eps2 = epsilon_squared(h_stat=0.5, n_total=20, k=3)
+        assert eps2 == 0.0, f"Expected 0.0 for negative raw formula result, got {eps2}"
 
 
 # ---------------------------------------------------------------------------
