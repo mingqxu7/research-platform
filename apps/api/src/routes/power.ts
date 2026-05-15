@@ -37,22 +37,26 @@ export async function powerRoutes(app: FastifyInstance): Promise<void> {
     const analysisUrl =
       process.env.ANALYSIS_SERVICE_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
-    const upstream = await fetch(`${analysisUrl}/power-analysis`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        test_type,
-        effect_size: fs_effect_size,
-        alpha: correctedAlpha,
-        power,
-        n_groups: num_conditions,
-      }),
-    });
+    let upstream: Response;
+    try {
+      upstream = await fetch(`${analysisUrl}/power-analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          test_type,
+          effect_size: fs_effect_size,
+          alpha: correctedAlpha,
+          power,
+          n_groups: num_conditions,
+        }),
+      });
+    } catch {
+      return reply.status(502).send({ error: "Analysis service unavailable" });
+    }
 
     if (!upstream.ok) {
       const detail = await upstream.text().catch(() => "unknown error");
-      reply.status(502).send({ error: "Analysis service error", detail });
-      return;
+      return reply.status(502).send({ error: "Analysis service error", detail });
     }
 
     const result = await upstream.json() as {

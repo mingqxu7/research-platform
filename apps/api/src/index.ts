@@ -1,6 +1,7 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { ZodError } from "zod";
 import { studyRoutes } from "./routes/studies";
 import { runRoutes } from "./routes/runs";
 import { powerRoutes } from "./routes/power";
@@ -17,7 +18,9 @@ const app = Fastify({
 });
 
 app.register(cors, {
-  origin: process.env.CORS_ORIGIN ?? "*",
+  // Fail closed: reject all cross-origin requests unless CORS_ORIGIN is explicitly set.
+  // A wildcard default allows any website to make requests to the API.
+  origin: process.env.CORS_ORIGIN ?? false,
 });
 
 // Health check
@@ -32,8 +35,9 @@ app.register(templateRoutes);
 
 // Global error handler
 app.setErrorHandler((error, req, reply) => {
-  if (error.name === "ZodError") {
-    return reply.code(400).send({ error: "Validation error", details: error.message });
+  if (error instanceof ZodError) {
+    // Send structured issues, not the raw message string which leaks internal paths/types
+    return reply.code(400).send({ error: "Validation error", details: error.issues });
   }
   app.log.error(error);
   return reply.code(500).send({ error: "Internal server error" });

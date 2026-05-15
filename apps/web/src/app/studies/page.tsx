@@ -16,12 +16,13 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 export default function StudiesPage() {
   const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API}/studies`)
       .then((r) => r.json())
       .then((data) => { setStudies(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setFetchError("Failed to load studies. Is the API running?"); setLoading(false); });
   }, []);
 
   return (
@@ -37,7 +38,8 @@ export default function StudiesPage() {
       </div>
 
       {loading && <p className="text-gray-500">Loading…</p>}
-      {!loading && studies.length === 0 && (
+      {fetchError && <p className="text-red-600 text-sm mb-4">{fetchError}</p>}
+      {!loading && !fetchError && studies.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           <p className="mb-3">No studies yet.</p>
           <div className="flex justify-center gap-3 text-sm">
