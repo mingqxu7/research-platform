@@ -44,6 +44,21 @@ services:
           name: research-platform-db
           property: connectionString
 
+  - type: web
+    name: research-platform-web
+    runtime: docker
+    dockerfilePath: apps/web/Dockerfile
+    dockerContext: apps/web
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_INTERNAL_URL
+        fromService:
+          type: web
+          name: research-platform-api
+          property: url
+
 databases:
   - name: research-platform-db
     plan: free
